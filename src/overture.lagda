@@ -7,7 +7,7 @@ author: William DeMeo
 
 \begin{code}
 
-{-# OPTIONS --without-K --exact-split --safe --cubical #-}
+{-# OPTIONS --without-K --exact-split --safe #-}
 
 module overture where
 

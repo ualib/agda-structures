@@ -19,8 +19,8 @@ module agda-structures where
 
 open import overture
 open import relations
-open import structures
-open import homs
+-- open import structures
+-- open import homs
 
 \end{code}
 
