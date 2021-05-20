@@ -15,7 +15,7 @@ module relations.discrete where
 
 open import agda-imports
 open import overture.preliminaries
-open import Relation.Binary.Core renaming (REL to BINREL; Rel to BinRel) public
+open import Relation.Binary.Core renaming (REL to BinREL; Rel to BinRel) public
 
 variable
  𝓥 : Level
@@ -43,19 +43,21 @@ module _ {α β : Level}{B : Type β}
  --  goal x = hPropExt (Pprop x) (Qprop x) φ ψ
 
 
-{-Binary relations. The binary relation type `Rel` in Cubical.Relation.Binary.Base
-  is the more general (heterogeneous) binary relation so we rename it `REL` and
-  use Rel for the homomgeneous binary relation (like in the standard library).
-  (This just saves us from having to repeat the domain type of homogeneous relations.)
+{-Binary relations. The binary relation types are called `Rel` and `REL` in the standard library, but we
+  will call them BinRel and BinREL and reserve the names Rel and REL for the more general types of
+  relations we define in the relations.continuous module.
 
-  The heterogeneous binary relation type is imported from Cubical.Relation.Binary.Base.
+  The heterogeneous binary relation type is imported from the standard library and renamed BinREL.
   ```
-  REL : ∀ {ℓ} (A B : Type ℓ) (ℓ' : Level) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
-  REL A B ℓ' = A → B → Type ℓ'
-  ```-}
--- Homogeneous binary relation type
--- Rel : ∀{ℓ} → Type ℓ → (ℓ' : Level) → Type (ℓ ⊔ lsuc ℓ')
--- Rel A ℓ' = REL A A ℓ'
+  BinREL : ∀ {ℓ} (A B : Type ℓ) (ℓ' : Level) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
+  BinREL A B ℓ' = A → B → Type ℓ'
+  ```
+  The homogeneous binary relation type is imported from the standard library and renamed BinRel.
+  ```
+  BinRel : ∀{ℓ} → Type ℓ → (ℓ' : Level) → Type (ℓ ⊔ lsuc ℓ')
+  BinRel A ℓ' = REL A A ℓ'
+  ```
+-}
 
 module _ {A : Type α}{B : Type β} where
 
@@ -90,25 +92,14 @@ Im f ⊆ S = ∀ x → f x ∈ S
 
 
 
--- Operations.
--- The following type denotes operations of arity I on type A.
--- Op : Type 𝓥 → Type α → Type(α ⊔ 𝓥)
--- Op I A = (I → A) → A
-
-
-ℓ₀ ℓ₁ : Level  -- (alias)
-ℓ₀ = lzero
-ℓ₁ = lsuc ℓ₀
-
-Arity : Type ℓ₁
-Arity = Type ℓ₀   -- Assuming for now that all arity types have universe level 0.
-                  -- This is merely for notational convenience, and it's not clear
-                  -- whether it's a real restriction---are there use-cases requiring
-                  -- arities inhabiting higher types?
-
-
-
-
+-- Operation symbols.
+-- We now define the type of operation symbols of arity `I : Type lzero` over the type `A : Type α`.
+Arity : Type (lsuc lzero)
+Arity = Type lzero   -- Assuming for now that all arity types have universe level 0.
+                     -- This is merely for notational convenience, and it's not clear
+                     -- whether it's a real restriction---are there use-cases requiring
+                     -- arities inhabiting higher types?
+-- The type of operation symbols.
 Op : Arity → Type α → Type α
 Op I A = (I → A) → A
 
@@ -117,40 +108,20 @@ Op I A = (I → A) → A
 π i x = x i
 
 
-
-{-Compatibility of binary relations. We now define the function `compatible` so
-  that, if `𝑩` denotes a structure and `r` a binary relation, then `compatible 𝑩
-  r` will represent the assertion that `r` is *compatible* with all basic
-  operations of `𝑩`. in the following sense:
+{-Compatibility of binary relations.
+  We now define the function `compatible` so that, if `𝑩` denotes a structure and `r` a binary
+  relation, then `compatible 𝑩 r` will represent the assertion that `r` is *compatible* with all
+  basic operations of `𝑩`. in the following sense:
   `∀ 𝑓 : ∣ 𝐹 ∣ → ∀(x y : ∥ 𝐹 ∥ 𝑓 → ∣ 𝑩 ∣) → (∀ i → r (x i)(y i)) → r (f x)(f y)` -}
+
 eval-rel : {A : Type α}{I : Arity} → BinRel A β → BinRel (I → A) β
 eval-rel R u v = ∀ i → R (u i) (v i)
 
 compatible-op : {A : Type α}{I : Arity} → Op I A → BinRel A β → Type (α ⊔ β)
 compatible-op f R  = ∀ u v → (eval-rel R) u v → R (f u) (f v)
 
-
-{-Fancy notation for compatible-op. We omit the previously used import of
-  `Relation.Binary.Core using (REL; Rel; _⇒_;_=[_]⇒_)` since we will redefine
-  _⇒_ and _=[_]⇒_ to be sure they're compatible with Cubical Agda.
-  Note to self: have a look at module Cubical.Functions.Logic when you get a
-  chance. Maybe there's something there we can use instead.
-
-  NOTE: `_⇒_` and `_=[_]⇒_` are lifted from `Relation.Binary.Core`
-  (modulo minor syntax mods) -}
-variable
- A : Type α
- B : Type β
-
--- infix 4 _⇒_ _=[_]⇒_
--- _⇒_ : REL A B γ → REL A B δ → Type _
--- P ⇒ Q = ∀ {x y} → P x y → Q x y
-
--- Generalised implication - if P ≡ Q it can be read as "f preserves P".
--- _=[_]⇒_ : Rel A γ → (A → B) → Rel B δ → Type _
--- P =[ f ]⇒ Q = P ⇒ (Q on f)
-
-_|:_ : {I : Arity} → Op I A → BinRel A β → Type _
+--Fancy notation for compatible-op.
+_|:_ : {A : Type α}{I : Arity} → Op I A → BinRel A β → Type _
 f |: R  = (eval-rel R) =[ f ]⇒ R
 
 \end{code}
