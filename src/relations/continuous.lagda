@@ -33,21 +33,24 @@ module relations.continuous where
 
 open import agda-imports
 open import overture.preliminaries
-open import relations.discrete using (Op)
+open import relations.discrete public
 
-ℓ₀ ℓ₁ : Level  -- (alias)
-ℓ₀ = lzero
-ℓ₁ = lsuc ℓ₀
+-- ℓ₀ ℓ₁ : Level  -- (alias)
+-- ℓ₀ = lzero
+-- ℓ₁ = lsuc ℓ₀
 
-Arity : Type ℓ₁
-Arity = Type ℓ₀   -- Assuming for now that all arity types have universe level 0.
-                  -- This is merely for notational convenience, and it's not clear
-                  -- whether it's a real restriction---are there use-cases requiring
-                  -- arities inhabiting higher types?
+-- Arity : Type ℓ₁
+-- Arity = Type ℓ₀   -- Assuming for now that all arity types have universe level 0.
+                     -- This is merely for notational convenience, and it's not clear
+                     -- whether it's a real restriction---are there use-cases requiring
+                     -- arities inhabiting higher types?
 
 -- Relations of arbitrary arity over a single sort.
 Rel : Arity → Type α → (β : Level) → Type (α ⊔ lsuc β)
 Rel ar A β = (ar → A) → Type β
+
+rel : Arity → Type β → Type (lsuc β)
+rel {β} a B = (a → B) → Type β
 
 -- Multisorted relations of arbitrary arity
 REL : (arity : Arity) → (arity → Type α) → (β : Level) → Type (α ⊔ lsuc β)

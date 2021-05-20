@@ -92,11 +92,28 @@ Im f ⊆ S = ∀ x → f x ∈ S
 
 -- Operations.
 -- The following type denotes operations of arity I on type A.
-Op : Type 𝓥 → Type α → Type(α ⊔ 𝓥)
+-- Op : Type 𝓥 → Type α → Type(α ⊔ 𝓥)
+-- Op I A = (I → A) → A
+
+
+ℓ₀ ℓ₁ : Level  -- (alias)
+ℓ₀ = lzero
+ℓ₁ = lsuc ℓ₀
+
+Arity : Type ℓ₁
+Arity = Type ℓ₀   -- Assuming for now that all arity types have universe level 0.
+                  -- This is merely for notational convenience, and it's not clear
+                  -- whether it's a real restriction---are there use-cases requiring
+                  -- arities inhabiting higher types?
+
+
+
+
+Op : Arity → Type α → Type α
 Op I A = (I → A) → A
 
 -- Example (projections)
-π : {I : Type 𝓥 } {A : Type α } → I → Op I A
+π : {I : Arity} {A : Type α } → I → Op I A
 π i x = x i
 
 
@@ -106,10 +123,10 @@ Op I A = (I → A) → A
   r` will represent the assertion that `r` is *compatible* with all basic
   operations of `𝑩`. in the following sense:
   `∀ 𝑓 : ∣ 𝐹 ∣ → ∀(x y : ∥ 𝐹 ∥ 𝑓 → ∣ 𝑩 ∣) → (∀ i → r (x i)(y i)) → r (f x)(f y)` -}
-eval-rel : {A : Type α}{I : Type 𝓥} → BinRel A β → BinRel (I → A)(𝓥 ⊔ β)
+eval-rel : {A : Type α}{I : Arity} → BinRel A β → BinRel (I → A) β
 eval-rel R u v = ∀ i → R (u i) (v i)
 
-compatible-op : {A : Type α}{I : Type 𝓥} → Op I A → BinRel A β → Type(α ⊔ 𝓥 ⊔ β)
+compatible-op : {A : Type α}{I : Arity} → Op I A → BinRel A β → Type (α ⊔ β)
 compatible-op f R  = ∀ u v → (eval-rel R) u v → R (f u) (f v)
 
 
@@ -133,7 +150,7 @@ variable
 -- _=[_]⇒_ : Rel A γ → (A → B) → Rel B δ → Type _
 -- P =[ f ]⇒ Q = P ⇒ (Q on f)
 
-_|:_ : {I : Type 𝓥} → Op I A → BinRel A β → Type _
+_|:_ : {I : Arity} → Op I A → BinRel A β → Type _
 f |: R  = (eval-rel R) =[ f ]⇒ R
 
 \end{code}
