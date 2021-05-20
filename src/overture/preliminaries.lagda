@@ -11,7 +11,7 @@ author: William DeMeo
 
 module overture.preliminaries where
 
-open import agda-imports public
+open import agda-imports
 
 
 variable

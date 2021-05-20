@@ -26,7 +26,7 @@ open import Data.Product using ( _,_ ; Σ ; Σ-syntax ; _×_; ∃; ∃-syntax)
 open import Data.Sum.Base using (_⊎_)
 open import Function.Base using (_∘_; id) public
 open import Level public using ( Lift; lift; lower) public
-open import Relation.Binary.Core using (REL; Rel; _⇒_;_=[_]⇒_) public
+open import Relation.Binary.Core using (_⇒_;_=[_]⇒_) public
 open import Relation.Binary.PropositionalEquality.Core using (sym; trans; subst) public
 open import Relation.Unary using (∅; Pred; _∪_; _∈_; _⊆_; ｛_｝) public
 open import Relation.Nullary using (Dec; _because_; ofʸ) public

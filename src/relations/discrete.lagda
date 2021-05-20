@@ -13,7 +13,9 @@ author: William DeMeo
 
 module relations.discrete where
 
+open import agda-imports
 open import overture.preliminaries
+open import Relation.Binary.Core renaming (REL to BINREL; Rel to BinRel) public
 
 variable
  𝓥 : Level
@@ -57,10 +59,10 @@ module _ {α β : Level}{B : Type β}
 
 module _ {A : Type α}{B : Type β} where
 
- ker : (A → B) → Rel A β
+ ker : (A → B) → BinRel A β
  ker g x y = g x ≡ g y
 
- ker' : (A → B) → (I : Type 𝓥) → Rel (I → A) (β ⊔ 𝓥)
+ ker' : (A → B) → (I : Type 𝓥) → BinRel (I → A) (β ⊔ 𝓥)
  ker' g I x y = g ∘ x ≡ g ∘ y
 
  kernel : (A → B) → Pred (A × A) β
@@ -69,7 +71,7 @@ module _ {A : Type α}{B : Type β} where
 
 module _ {A : Type α } where
 
- 𝟎 : Rel A α
+ 𝟎 : BinRel A α
  𝟎 x y = x ≡ y
 
  𝟎-pred : Pred (A × A) α
@@ -104,10 +106,10 @@ Op I A = (I → A) → A
   r` will represent the assertion that `r` is *compatible* with all basic
   operations of `𝑩`. in the following sense:
   `∀ 𝑓 : ∣ 𝐹 ∣ → ∀(x y : ∥ 𝐹 ∥ 𝑓 → ∣ 𝑩 ∣) → (∀ i → r (x i)(y i)) → r (f x)(f y)` -}
-eval-rel : {A : Type α}{I : Type 𝓥} → Rel A β → Rel (I → A)(𝓥 ⊔ β)
+eval-rel : {A : Type α}{I : Type 𝓥} → BinRel A β → BinRel (I → A)(𝓥 ⊔ β)
 eval-rel R u v = ∀ i → R (u i) (v i)
 
-compatible-op : {A : Type α}{I : Type 𝓥} → Op I A → Rel A β → Type(α ⊔ 𝓥 ⊔ β)
+compatible-op : {A : Type α}{I : Type 𝓥} → Op I A → BinRel A β → Type(α ⊔ 𝓥 ⊔ β)
 compatible-op f R  = ∀ u v → (eval-rel R) u v → R (f u) (f v)
 
 
@@ -131,7 +133,7 @@ variable
 -- _=[_]⇒_ : Rel A γ → (A → B) → Rel B δ → Type _
 -- P =[ f ]⇒ Q = P ⇒ (Q on f)
 
-_|:_ : {I : Type 𝓥} → Op I A → Rel A β → Type _
+_|:_ : {I : Type 𝓥} → Op I A → BinRel A β → Type _
 f |: R  = (eval-rel R) =[ f ]⇒ R
 
 \end{code}
