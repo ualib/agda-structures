@@ -71,19 +71,19 @@ module _ {A : Type α}{B : Type β} where
  kernel g (x , y) = g x ≡ g y
 
 
-module _ {A : Type α } where
+module _ {B : Type β} where
 
- 𝟎 : BinRel A α
- 𝟎 x y = x ≡ y
 
- 𝟎-pred : Pred (A × A) α
+ 𝟎 : BinRel B β
+ 𝟎 = _≡_
+
+ 𝟎-pred : Pred (B × B) β
  𝟎-pred (x , y) = x ≡ y
 
- 𝟎-sigma : Type α
- 𝟎-sigma = Σ[ x ∈ A ] Σ[ y ∈ A ] x ≡ y
+ 𝟎-sigma : Type β
+ 𝟎-sigma = Σ[ x ∈ B ] Σ[ y ∈ B ] x ≡ y
 
- 𝟎-sigma' : Type α
- 𝟎-sigma' = Σ[ (x , y) ∈ A × A ] x ≡ y
+
 
 private variable γ : Level
 
@@ -137,3 +137,18 @@ f |: R  = (eval-rel R) =[ f ]⇒ R
 
 
 
+data _[_]_ {β : Level} {B : Type β} (x : B) (α : Level) : B → Type (α ⊔ β) where
+ instance REFL : x [ α ] x
+
+infix 4 _[_]_
+
+module _ {α β : Level} {B : Type β} where
+
+ 𝟎' : BinRel B (α ⊔ β)
+ 𝟎' x y = x [ α ] y
+
+ 𝟎-pred' : Pred (B × B) (α ⊔ β)
+ 𝟎-pred' (x , y) = x [ α ] y
+
+ 𝟎-sigma' : Type (α ⊔ β)
+ 𝟎-sigma' = Σ[ x ∈ B ] Σ[ y ∈ B ] x [ α ] y

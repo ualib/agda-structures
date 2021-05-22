@@ -17,7 +17,7 @@ module relations.quotients where
 
 open import agda-imports
 open import overture.preliminaries
-open import Relation.Binary renaming (Rel to BinRel) using (IsEquivalence)
+open import Relation.Binary renaming (Rel to BinRel) using (IsEquivalence) public
 open import relations.continuous public
 
 Equivalence : {α β : Level} → Type β → Type (lsuc α ⊔ β)
@@ -44,7 +44,7 @@ module _ {α β : Level}  where
    C≡[u] : C ≡ [ block-u / R ]
 
  _/_ : (B : Type β ) → Equivalence{α} B → Type (lsuc α ⊔ β)
- _/_ B R = Σ[ C ∈ Pred B α ] IsBlock C {R}
+ B / R = Σ[ C ∈ Pred B α ] IsBlock C {R}
 
  infix -1 _/_
 
@@ -53,6 +53,10 @@ module _ {α β : Level}  where
 
  ⌞_⌟ : {B : Type β}{R : Equivalence{α} B} → B / R  → B
  ⌞ _ , R-block a _ ⌟ = a
+
+ ⟪⟫≡-elim : {B : Type β}{R : Equivalence{α} B} → ∀ a b
+  →         ⟪ a / R ⟫ ≡ ⟪ b / R ⟫ → ∣ R ∣ a b
+ ⟪⟫≡-elim {R = R} a .a refl = IsEquivalence.refl (snd R)
 
 
 

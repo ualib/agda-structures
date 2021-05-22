@@ -20,10 +20,10 @@ open import relations.continuous
 Signature : Type ℓ₁
 Signature = Σ[ F ∈ Type ℓ₀ ] (F → Arity)
 
-Structure : (𝑅 𝐹 : Signature){β : Level} → Type (lsuc β)
-Structure 𝑅 𝐹 {β} =
+Structure : {α : Level}(𝑅 𝐹 : Signature){β : Level} → Type (lsuc α ⊔ lsuc β)
+Structure {α} 𝑅 𝐹 {β} =
  Σ[ B ∈ Type β ]                    -- the domain of the structure is B
-  ( ((r : ∣ 𝑅 ∣) → rel(∥ 𝑅 ∥ r) B)  -- the interpretations of the relation symbols
+  ( ((r : ∣ 𝑅 ∣) → Rel(∥ 𝑅 ∥ r) B α)  -- the interpretations of the relation symbols
   × ((f : ∣ 𝐹 ∣) → Op(∥ 𝐹 ∥ f) B) ) -- the interpretations of the operation symbols
 
 RStructure : (β : Level) → Signature → Type (lsuc β)
@@ -33,7 +33,7 @@ AStructure : (β : Level) → Signature → Type (lsuc β)
 AStructure β 𝐹 = Σ[ B ∈ Type β ] ∀ (f : ∣ 𝐹 ∣) → Op (∥ 𝐹 ∥ f) B
 
 -- Reducts
-Structure→AStructure : {𝑅 𝐹 : Signature}{β : Level} → Structure 𝑅 𝐹 → AStructure β 𝐹
+Structure→AStructure : {α : Level}{𝑅 𝐹 : Signature}{β : Level} → Structure{α} 𝑅 𝐹 → AStructure β 𝐹
 Structure→AStructure (B , (ℛ , ℱ)) = B , ℱ
 
 Structure→RStructure : {𝑅 𝐹 : Signature}{β : Level} → Structure 𝑅 𝐹 → RStructure β 𝑅
@@ -47,21 +47,20 @@ module _ {𝑅 𝐹 : Signature}  where
    of `f` in `ℬ`. -}
 
   -- Syntax for interpretation of relations and operations.
-  _⟦_⟧ᵣ : (ℬ : Structure 𝑅 𝐹 {β})(R : fst 𝑅) → rel ((snd 𝑅) R) (fst ℬ)
+  _⟦_⟧ᵣ : (ℬ : Structure 𝑅 𝐹 {β})(r : fst 𝑅) → Rel ((snd 𝑅) r) (fst ℬ) α
   ℬ ⟦ R ⟧ᵣ = λ b → (∣ snd ℬ ∣ R) b
 
-  _⟦_⟧ₒ : (ℬ : Structure 𝑅 𝐹 {β})(𝑓 : fst 𝐹) → Op ((snd 𝐹) 𝑓) (fst ℬ)
+  _⟦_⟧ₒ : (ℬ : Structure{α} 𝑅 𝐹 {β})(𝑓 : fst 𝐹) → Op ((snd 𝐹) 𝑓) (fst ℬ)
   ℬ ⟦ 𝑓 ⟧ₒ = λ b → (snd (snd ℬ) 𝑓) b
 
-  _ʳ_ : (R : fst 𝑅)(ℬ : Structure 𝑅 _ {β}) → rel ((snd 𝑅) R) (fst ℬ)
+  _ʳ_ : (R : fst 𝑅)(ℬ : Structure 𝑅 _ {β}) → Rel ((snd 𝑅) R) (fst ℬ) α
   R ʳ ℬ = λ b → (ℬ ⟦ R ⟧ᵣ) b
 
-  _ᵒ_ : (𝑓 : fst 𝐹)(ℬ : Structure _ 𝐹 {β}) → Op ((snd 𝐹) 𝑓) (fst ℬ)
+  _ᵒ_ : (𝑓 : fst 𝐹)(ℬ : Structure{α} _ 𝐹 {β}) → Op ((snd 𝐹) 𝑓) (fst ℬ)
   𝑓 ᵒ ℬ = λ b → (ℬ ⟦ 𝑓 ⟧ₒ) b
 
-  compatible : (𝑩 : Structure 𝑅 𝐹 {β}) → BinRel (fst 𝑩) α  → Type (β ⊔ α)
+  compatible : {ρ : Level} (𝑩 : Structure{α} 𝑅 𝐹 {β}) → BinRel (fst 𝑩) ρ  → Type (β ⊔ ρ)
   compatible 𝑩 r = ∀ 𝑓 → (𝑓 ᵒ 𝑩) |: r
-
 
 
 -- Alternative development using records
