@@ -32,8 +32,8 @@ module _ {α β : Level}{B : Type β}
          (P Q : Pred B α) where
 
  -- Naturally, if P ≡ Q, then P ⊆ Q and Q ⊆ P.
- ≡→⊆ : P ≡ Q → P ⊆ Q
- ≡→⊆ pq {x} Px = subst (λ p → x ∈ p) pq Px -- transp (λ i → pq i x) i0 Px
+ -- ≡→⊆ : P ≡ Q → P ⊆ Q
+ -- ≡→⊆ pq {x} Px = subst (λ p → x ∈ p) pq Px -- transp (λ i → pq i x) i0 Px
 
  -- In cubical tt, we can also prove the converse!
  -- PropExt : (∀ x → isProp (P x)) → (∀ x → isProp (Q x)) → P ⊆ Q → Q ⊆ P → P ≡ Q
@@ -85,6 +85,8 @@ module _ {A : Type α } where
  𝟎-sigma' : Type α
  𝟎-sigma' = Σ[ (x , y) ∈ A × A ] x ≡ y
 
+private variable γ : Level
+
 -- The following type denotes the assertion that the image of a given
 -- function is contained in a given subset of the codomain.
 Im_⊆_ : {A : Type α}{B : Type β} → (A → B) → Pred B γ → Type (α ⊔ γ)
@@ -94,11 +96,12 @@ Im f ⊆ S = ∀ x → f x ∈ S
 
 -- Operation symbols.
 -- We now define the type of operation symbols of arity `I : Type lzero` over the type `A : Type α`.
-Arity : Type (lsuc lzero)
-Arity = Type lzero   -- Assuming for now that all arity types have universe level 0.
-                     -- This is merely for notational convenience, and it's not clear
-                     -- whether it's a real restriction---are there use-cases requiring
-                     -- arities inhabiting higher types?
+Arity : Type ℓ₁
+Arity = Type ℓ₀  -- Assuming for now that all arity types have universe level 0.
+                 -- This is merely for notational convenience, and it's not clear
+                 -- whether it's a real restriction---are there use-cases requiring
+                 -- arities inhabiting higher types?
+
 -- The type of operation symbols.
 Op : Arity → Type α → Type α
 Op I A = (I → A) → A
