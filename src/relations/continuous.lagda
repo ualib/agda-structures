@@ -45,40 +45,73 @@ open import relations.discrete public
                      -- whether it's a real restriction---are there use-cases requiring
                      -- arities inhabiting higher types?
 
--- Relations of arbitrary arity over a single sort.
-Rel : Arity → Type α → (β : Level) → Type (α ⊔ lsuc β)
-Rel ar A β = (ar → A) → Type β
+private variable α ρ : Level
 
-rel : Arity → Type β → Type (lsuc β)
-rel {β} a B = (a → B) → Type β
+-- Relations of arbitrary arity over a single sort.
+Rel : Arity → Type α → (ρ : Level) → Type (α ⊔ lsuc ρ)
+Rel I A ρ = (I → A) → Type ρ
+
+ℛ : Type α → {I : Arity}{ρ : Level} → Type (α ⊔ lsuc ρ)
+ℛ A {I} {ρ} = (I → A) → Type ρ
+
+-- rel : {ρ : Level} → Arity → Type α → Type (lsuc α)
+-- rel {ρ} ar A = (ar → A) → Type ρ
 
 -- Multisorted relations of arbitrary arity
-REL : (arity : Arity) → (arity → Type α) → (β : Level) → Type (α ⊔ lsuc β)
-REL arity 𝒜 β = ((i : arity) → 𝒜 i) → Type β
+REL : (I : Arity) → (I → Type α) → (ρ : Level) → Type (α ⊔ lsuc ρ)
+REL I 𝒜 ρ = ((i : I) → 𝒜 i) → Type ρ
+
+RΠ : {I : Arity} → (I → Type α) → {ρ : Level} → Type (α ⊔ lsuc ρ)
+RΠ {I = I} 𝒜 {ρ} = ((i : I) → 𝒜 i) → Type ρ
+
+RΠ-syntax : (I : Arity) → (I → Type α) → {ρ : Level} → Type (α ⊔ lsuc ρ)
+RΠ-syntax I 𝒜 {ρ} = RΠ 𝒜 {ρ}
+
+syntax RΠ-syntax I (λ i → 𝒜) = RΠ[ i ∈ I ] 𝒜
+infix 6 RΠ-syntax
 
 -- Compatibility of relations and operations.
 module _ {I J : Arity} {A : Type α} where
 
  -- Lift a relation of tuples up to a relation on tuples of tuples.
- evalRel : Rel I A β → (I → J → A) → Type β
+ evalRel : Rel I A ρ → (I → J → A) → Type ρ
  evalRel R t = ∀ (j : J) → R λ i → t i j
+
+ evalRel[] : ℛ A → (I → J → A) → Type ρ
+ evalRel[] R t = ∀ (j : J) → R λ i → t i j
 
  {- A relation R is compatible with an operation 𝑓 if for every tuple t of tuples
     belonging to R, the tuple whose elements are the result of applying 𝑓 to
     sections of t also belongs to R. (see the bottom of this file for an heuristic explanation) -}
- compRel : Op J A → Rel I A β → Type (α ⊔ β)
+ compRel : Op J A → Rel I A ρ → Type (α ⊔ ρ)
  compRel 𝑓 R  = ∀ (t : (I → J → A)) → (evalRel R t → R λ i → (𝑓 (t i)))
+
+ compatible-op-rel : 𝒪(A) → ℛ(A){I}{ρ} → Type (α ⊔ ρ)
+ compatible-op-rel 𝑓 R  = ∀ (t : (I → J → A)) → (evalRel R t → R λ i → (𝑓 (t i)))
 
 module _ {I J : Arity} {𝒜 : I → Type α} where
 
  -- Lift a relation of tuples up to a relation on tuples of tuples.
- evalREL : REL I 𝒜 β → (∀ i → (J → 𝒜 i)) → Type β
+ evalREL : REL I 𝒜 ρ → (∀ i → (J → 𝒜 i)) → Type ρ
  evalREL R t = ∀ j → R (λ i → (t i) j)
 
- compREL : (∀ i → Op J (𝒜 i)) → REL I 𝒜 β → Type (α ⊔ β)
+ compREL : (∀ i → 𝒪(𝒜 i)) → REL I 𝒜 ρ → Type (α ⊔ ρ)
  compREL 𝑓 R  = ∀ t → (evalREL R) t → R λ i → (𝑓 i)(t i)
 
+ evalREL' : RΠ 𝒜 {ρ} → (∀ i → (J → 𝒜 i)) → Type ρ
+ evalREL' R t = ∀ j → R (λ i → (t i) j)
+
+ compatible-op-REL : (∀ i → 𝒪 (𝒜 i) ) → RΠ 𝒜 {ρ} → Type (α ⊔ ρ)
+ compatible-op-REL 𝑓 R  = ∀ t → (evalREL' R) t → R λ i → (𝑓 i)(t i)
+
 \end{code}
+
+-- Restricting relations to a given scope.
+-- subtuple : {A : Type α}(scope : Pred I β) → (I → A) → (Σ[ i ∈ I ] i ∈ scope) → A
+-- subtuple scope tuple (i , p) = tuple i
+-- restriction : {I : Arity}{A : Type α} → Rel I A → (scope : Pred I ℓ₀) → Rel (Σ[ i ∈ I ] i ∈ scope) A
+-- restriction f scope x = {!!}
+
 
 
 ### Heuristic description of `evalRel` and `compRel`.

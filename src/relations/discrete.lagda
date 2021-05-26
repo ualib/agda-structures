@@ -17,8 +17,14 @@ open import agda-imports
 open import overture.preliminaries
 open import Relation.Binary.Core renaming (REL to BinREL; Rel to BinRel) public
 
-variable
- 𝓥 : Level
+-- Operation symbols.
+-- We now define the type of operation symbols of arity `I : Type lzero` over the type `A : Type α`.
+Arity : Type ℓ₁
+Arity = Type ℓ₀  -- Assuming for now that all arity types have universe level 0.
+                 -- This is merely for notational convenience, and it's not clear
+                 -- whether it's a real restriction---are there use-cases requiring
+                 -- arities inhabiting higher types?
+
 
 {-Unary relations. The unary relation (or "predicate") type is imported from
   Relation.Unary of the std lib.
@@ -27,21 +33,6 @@ variable
   Pred A ℓ = A → Set ℓ
   ```
 -}
-
-module _ {α β : Level}{B : Type β}
-         (P Q : Pred B α) where
-
- -- Naturally, if P ≡ Q, then P ⊆ Q and Q ⊆ P.
- -- ≡→⊆ : P ≡ Q → P ⊆ Q
- -- ≡→⊆ pq {x} Px = subst (λ p → x ∈ p) pq Px -- transp (λ i → pq i x) i0 Px
-
- -- In cubical tt, we can also prove the converse!
- -- PropExt : (∀ x → isProp (P x)) → (∀ x → isProp (Q x)) → P ⊆ Q → Q ⊆ P → P ≡ Q
- -- PropExt Pprop Qprop φ ψ = funExt goal
- --  where
- --  goal : (x : B) → P x ≡ Q x
- --  goal x = hPropExt (Pprop x) (Qprop x) φ ψ
-
 
 {-Binary relations. The binary relation types are called `Rel` and `REL` in the standard library, but we
   will call them BinRel and BinREL and reserve the names Rel and REL for the more general types of
@@ -58,57 +49,73 @@ module _ {α β : Level}{B : Type β}
   BinRel A ℓ' = REL A A ℓ'
   ```
 -}
+module _ {α β : Level}
+         {A : Type α}{B : Type β}
+         where
 
-module _ {A : Type α}{B : Type β} where
 
  ker : (A → B) → BinRel A β
  ker g x y = g x ≡ g y
 
- ker' : (A → B) → (I : Type 𝓥) → BinRel (I → A) (β ⊔ 𝓥)
+ ker' : (A → B) → (I : Arity) → BinRel (I → A) β
  ker' g I x y = g ∘ x ≡ g ∘ y
 
  kernel : (A → B) → Pred (A × A) β
  kernel g (x , y) = g x ≡ g y
 
 
-module _ {B : Type β} where
+module _ {α ρ : Level}{A : Type (α ⊔ ρ)} where
+
+-- Subset containment relation for binary realtions
+ _⊑_ : BinRel A ρ → BinRel A ρ → Type (α ⊔ ρ)
+ P ⊑ Q = ∀ x y → P x y → Q x y
+
+ ⊑-refl : {P : BinRel A ρ} → P ⊑ P
+ ⊑-refl x y Pxy = Pxy
+
+ ⊑-trans : {P Q R : BinRel A ρ} → P ⊑ Q → Q ⊑ R → P ⊑ R
+ ⊑-trans {P = P}{Q}{R} PQ QR x y Pxy = QR x y (PQ x y Pxy)
 
 
- 𝟎 : BinRel B β
- 𝟎 = _≡_
-
- 𝟎-pred : Pred (B × B) β
- 𝟎-pred (x , y) = x ≡ y
-
- 𝟎-sigma : Type β
- 𝟎-sigma = Σ[ x ∈ B ] Σ[ y ∈ B ] x ≡ y
 
 
+ -- 𝟎 : BinRel A (α ⊔ β)
+ -- 𝟎 x y = Lift α (x ≡ y)
+ -- 𝟎 : BinRel A ρ
+ -- 𝟎 x y = {!!} -- x ≡ y
 
-private variable γ : Level
+ -- 𝟎-pred : Pred (A × A) α
+ -- 𝟎-pred (x , y) = {!!} -- x ≡ y
+
+ -- 𝟎-sigma : Type α
+ -- 𝟎-sigma = {!!} -- Σ[ x ∈ A ] Σ[ y ∈ A ] x ≡ y
+
+
+
+private variable α β ρ : Level
 
 -- The following type denotes the assertion that the image of a given
 -- function is contained in a given subset of the codomain.
-Im_⊆_ : {A : Type α}{B : Type β} → (A → B) → Pred B γ → Type (α ⊔ γ)
+Im_⊆_ : {A : Type α}{B : Type β} → (A → B) → Pred B ρ → Type (α ⊔ ρ)
 Im f ⊆ S = ∀ x → f x ∈ S
 
 
-
--- Operation symbols.
--- We now define the type of operation symbols of arity `I : Type lzero` over the type `A : Type α`.
-Arity : Type ℓ₁
-Arity = Type ℓ₀  -- Assuming for now that all arity types have universe level 0.
-                 -- This is merely for notational convenience, and it's not clear
-                 -- whether it's a real restriction---are there use-cases requiring
-                 -- arities inhabiting higher types?
 
 -- The type of operation symbols.
 Op : Arity → Type α → Type α
 Op I A = (I → A) → A
 
+-- New notation for operations on A of arity I
+
+𝒪 : Type α → {I : Arity} → Type α
+𝒪 A {I} = (I → A) → A
+
 -- Example (projections)
 π : {I : Arity} {A : Type α } → I → Op I A
 π i x = x i
+
+π' : {I : Arity} {A : Type α } → I → 𝒪 A
+π' i x = x i
 
 
 {-Compatibility of binary relations.
@@ -120,12 +127,23 @@ Op I A = (I → A) → A
 eval-rel : {A : Type α}{I : Arity} → BinRel A β → BinRel (I → A) β
 eval-rel R u v = ∀ i → R (u i) (v i)
 
-compatible-op : {A : Type α}{I : Arity} → Op I A → BinRel A β → Type (α ⊔ β)
+compatible-op : {A : Type α}{I : Arity} → 𝒪 A{I} → BinRel A β → Type (α ⊔ β)
 compatible-op f R  = ∀ u v → (eval-rel R) u v → R (f u) (f v)
 
+comp-op : {A : Type α}{I : Arity} → 𝒪 A{I}  → BinRel A β → Type (α ⊔ β)
+comp-op f R  = ∀ u v → (eval-rel R) u v → R (f u) (f v)
+
 --Fancy notation for compatible-op.
-_|:_ : {A : Type α}{I : Arity} → Op I A → BinRel A β → Type _
+_|:_ : {A : Type α}{I : Arity} → 𝒪 A{I} → BinRel A β → Type (α ⊔ β)
 f |: R  = (eval-rel R) =[ f ]⇒ R
+
+compatagree : {A : Type α}{I : Arity}{f : 𝒪 A{I}}{R : BinRel A β}
+ →            compatible-op f R → f |: R
+compatagree {f = f}{R} c {x}{y} Rxy = c x y Rxy
+
+compatagree' : {A : Type α}{I : Arity}{f : 𝒪 A{I}}{R : BinRel A β}
+ →             f |: R → compatible-op f R
+compatagree' {f = f}{R} c = λ u v x → c x
 
 \end{code}
 

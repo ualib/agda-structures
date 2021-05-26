@@ -56,11 +56,11 @@ A concrete example is `⟪𝟎⟫[ 𝑨 ╱ θ ]`, presented in the next subsect
 
 \begin{code}
 
-module _ {α β : Level} where
+module _ {ρ β : Level} where
 
 
 
- _╱_ : (𝑩 : Structure{α} 𝑅 𝐹 {β}) → Con{α} 𝑩 → Structure{α} 𝑅 𝐹 {lsuc α ⊔ β}
+ _╱_ : (𝑩 : Structure{ρ} 𝑅 𝐹 {β}) → Con{ρ} 𝑩 → Structure{ρ} 𝑅 𝐹 {lsuc ρ ⊔ β}
 
  𝑩 ╱ θ = (∣ 𝑩 ∣ / ∣ θ ∣)                                    -- domain of the quotient algebra
          , (λ r x → (r ʳ 𝑩) λ i → ⌞ x i ⌟)
@@ -84,7 +84,7 @@ From this we easily obtain the zero congruence of `𝑨 ╱ θ` by applying the 
 
  open import Axiom.Extensionality.Propositional renaming (Extensionality to funext)
 
- 𝟎[_╱_] : (𝑩 : Structure{α} 𝑅 𝐹 {β})(θ : Con 𝑩){fe : funext ℓ₀ (lsuc α ⊔ β)} → Con{lsuc α ⊔ β} (𝑩 ╱ θ)
+ 𝟎[_╱_] : (𝑩 : Structure{ρ} 𝑅 𝐹 {β})(θ : Con 𝑩){fe : funext ℓ₀ (lsuc ρ ⊔ β)} → Con{lsuc ρ ⊔ β} (𝑩 ╱ θ)
  𝟎[ 𝑩 ╱ θ ] {fe} =  𝟘{𝑩 = 𝑩 ╱ θ} fe
 
 \end{code}

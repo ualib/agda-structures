@@ -12,8 +12,8 @@ module relations where
 
 open import relations.discrete public
 open import relations.continuous public
--- open import relations.quotients public
--- open import Relations.Truncation public
+open import relations.quotients public
+open import relations.truncation public
 -- open import Relations.Extensionality public
 
 \end{code}

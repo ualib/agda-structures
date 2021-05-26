@@ -14,8 +14,8 @@ module overture.preliminaries where
 open import agda-imports
 
 
-variable
- α β : Level
+private variable
+ α β ρ : Level
 
 {-Pi types. The dependent function type is traditionally denoted with a Pi symbol
   typically arranged as Π(x : A) B x, or something similar.  In Agda syntax, one writes
@@ -64,6 +64,33 @@ _≈_ : {A : Type α } {B : A → Type β } → Π B → Π B → Type (α ⊔ �
 f ≈ g = ∀ x → f x ≡ g x
 
 infix 8 _≈_
+
+
+
+transport : {A : Type α } (B : A → Type β) {x y : A} → x ≡ y → B x → B y
+transport B refl = id
+
+
+
+-- The empty type
+data 𝟘 : Type ℓ₀ where  -- maybe we should use ⊥ instead ...?
+
+-- The one element type
+data 𝟙 : Type ℓ₀ where
+ 𝟎 : 𝟙
+
+-- the two element type
+data 𝟚 : Type ℓ₀ where  -- Should we use Bool instead?
+ 𝟎 : 𝟚                  -- Should we use false instead?
+ 𝟏 : 𝟚                  -- Should we use true instead?
+
+-- the three element type
+data 𝟛 : Type ℓ₀ where
+ 𝟎 : 𝟛
+ 𝟏 : 𝟛
+ 𝟐 : 𝟛
+
+
 
 \end{code}
 

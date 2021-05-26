@@ -14,6 +14,7 @@ module overture.inverses where
 open import agda-imports
 open import overture.preliminaries
 
+private variable α β : Level
 
 module _ {A : Type α }{B : Type β } where
 
@@ -154,6 +155,8 @@ Before moving on to discuss surjective functions, let us prove (the obvious fact
 
 id-is-injective : {A : Type α} → IsInjective{A = A}{B = A} (λ x → x)
 id-is-injective = λ z → z
+
+private variable γ : Level
 
 ∘-injective : {A : Type α}{B : Type β}{C : Type γ}{f : A → B}{g : B → C}
  →            IsInjective f → IsInjective g → IsInjective (g ∘ f)
