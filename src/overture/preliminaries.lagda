@@ -12,7 +12,7 @@ author: William DeMeo
 module overture.preliminaries where
 
 open import agda-imports
-
+open import Relation.Binary.PropositionalEquality using (sym; trans)
 
 private variable
  α β ρ : Level
@@ -69,6 +69,12 @@ infix 8 _≈_
 
 transport : {A : Type α } (B : A → Type β) {x y : A} → x ≡ y → B x → B y
 transport B refl = id
+
+
+≡-by-parts : {A : Type α}{B : Type β}{u v : A × B}
+ →           fst u ≡ fst v → snd u ≡ snd v → u ≡ v
+≡-by-parts refl refl = refl
+
 
 
 

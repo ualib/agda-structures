@@ -19,84 +19,98 @@ open import agda-imports
 open import overture.preliminaries
 open import Relation.Binary renaming (Rel to BinRel) using (IsEquivalence) public
 open import relations.continuous public
+open import Relation.Binary.PropositionalEquality renaming (sym to ≡-sym; trans to ≡-trans) using ()
 
-Equivalence : {α β : Level} → Type β → Type (lsuc α ⊔ β)
-Equivalence {α}{β} B = Σ[ r ∈ BinRel B α ] IsEquivalence r
+private variable α : Level
 
-ker-IsEquivalence : {A : Type α}{B : Type β}(f : A → B) → IsEquivalence (ker f)
-ker-IsEquivalence f = record { refl = refl ; sym = λ x → sym x ; trans = λ x y → trans x y }
-
+Equivalence : Type α → {ρ : Level} → Type (lsuc α ⊔ lsuc ρ)
+Equivalence {α} A {ρ} = Σ[ r ∈ BinRel A (α ⊔ ρ) ] IsEquivalence r
 
 {- Blocks of partitions.
    Before defining the quotient type, we define a type representing inhabitants of quotients;
    i.e., blocks of a partition (recall partitions correspond to equivalence relations) -}
 
-module _ {α β : Level}  where
+Block : {A : Type α} → A → {ρ : Level} → Equivalence A{ρ} → Pred A (α ⊔ ρ)
+Block u {ρ} R = ∣ R ∣ u
 
- [_/_] : {B : Type β} → B → Equivalence{α} B → Pred B α
+
+record IsBlock {α ρ : Level}{A : Type α}(C : Pred A (α ⊔ ρ)){R : Equivalence A {ρ}} : Type (lsuc (α ⊔ ρ)) where
+ constructor R-block
+ field
+  block-u : A
+  C≡[u] : C ≡ Block block-u {ρ} R
+
+
+Quotient : {α : Level} (A : Type α ){ρ : Level} → Equivalence A {ρ}  → Type (lsuc (α ⊔ ρ))
+Quotient {α} A {ρ} R = Σ[ C ∈ Pred A (α ⊔ ρ) ] IsBlock{α}{ρ} C {R}
+
+module _ {α ρ : Level} where
+ -- Alternative notation for blocks and quotients.
+ -- N.B. These are only useful when universe levels α ρ can be inferred.
+
+ -- The R-block containing u : A.
+ [_/_] :  {A : Type α} → A → Equivalence A{ρ} → Pred A (α ⊔ ρ)
  [ u / R ] = ∣ R ∣ u
 
-
- record IsBlock {B : Type β}(C : Pred B α){R : Equivalence{α} B} : Type (lsuc α ⊔ β) where
-  constructor R-block
-  field
-   block-u : B
-   C≡[u] : C ≡ [ block-u / R ]
-
- _/_ : (B : Type β ) → Equivalence{α} B → Type (lsuc α ⊔ β)
- B / R = Σ[ C ∈ Pred B α ] IsBlock C {R}
+ _/_ : (A : Type α ) → Equivalence A {ρ}  → Type (lsuc (α ⊔ ρ))
+ A / R = Σ[ C ∈ Pred A (α ⊔ ρ) ] IsBlock{α}{ρ} C {R}
 
  infix -1 _/_
 
- ⟪_/_⟫ : {B : Type β} → B → (R : Equivalence{α} B) → B / R
- ⟪ a / R ⟫ = [ a / R ] , R-block a refl
+ ⟪_/_⟫ : {A : Type α} → A → (R : Equivalence A {ρ} ) → A / R
+ ⟪ a / R ⟫ = Block a {ρ} R , R-block a refl
 
- ⌞_⌟ : {B : Type β}{R : Equivalence{α} B} → B / R  → B
+ ⌞_⌟ : {A : Type α}{R : Equivalence A{ρ} } → A / R → A
  ⌞ _ , R-block a _ ⌟ = a
 
- ⟪⟫≡-elim : {B : Type β}{R : Equivalence{α} B} → ∀ a b
-  →         ⟪ a / R ⟫ ≡ ⟪ b / R ⟫ → ∣ R ∣ a b
- ⟪⟫≡-elim {R = R} a .a refl = IsEquivalence.refl (snd R)
+ ⟪⟫≡-elim : {A : Type α}{R : Equivalence A{ρ} } → ∀ u v
+  →         ⟪ u / R ⟫ ≡ ⟪ v / R ⟫ → ∣ R ∣ u v
+ ⟪⟫≡-elim {R = R} u .u refl = IsEquivalence.refl (snd R)
 
 
+ ≡→⊆ : {A : Type α}(P Q : Pred A ρ) → P ≡ Q → P ⊆ Q
+ ≡→⊆ P .P refl {x} Px = Px
 
-≡→⊆ : {B : Type β}(P Q : Pred B α) → P ≡ Q → P ⊆ Q
-≡→⊆ P .P refl {x} Px = Px
+module _ {A : Type α}(ρ : Level) {R : Equivalence A {ρ}} where
 
-module _ {B : Type β}{R : Equivalence{α} B} where
-
+ open IsEquivalence
  -- ([]-⊆ used to be called /-subset)
- []-⊆ :  ∀ x y → ∣ R ∣ x y → [ x / R ] ⊆  [ y / R ]
- []-⊆ x y Rxy {z} Rxz = IsEquivalence.trans (snd R) (IsEquivalence.sym (snd R) Rxy) Rxz
+ []-⊆ : (x y : A) → ∣ R ∣ x y → Block x {ρ} R ⊆  Block y {ρ} R
+ []-⊆ x y Rxy {z} Rxz = trans (snd R) (IsEquivalence.sym (snd R) Rxy) Rxz
 
  -- ([]-⊇ used to be called /-supset)
- []-⊇ : ∀ x y → ∣ R ∣ x y → [ y / R ] ⊆ [ x / R ]
+ []-⊇ : (x y : A) → ∣ R ∣ x y → Block y {ρ} R ⊆  Block x {ρ} R
  []-⊇ x y Rxy {z} Ryz = IsEquivalence.trans (snd R) Rxy Ryz
 
- ⊆-[] : ∀ x y → [ x / R ] ⊆ [ y / R ] → ∣ R ∣ x y
+ ⊆-[] : (x y : A) → Block x {ρ} R ⊆  Block y {ρ} R → ∣ R ∣ x y
  ⊆-[] x y xy = IsEquivalence.sym (snd R) (xy (IsEquivalence.refl (snd R)))
 
- ⊇-[] : ∀ x y → [ y / R ] ⊆ [ x / R ] → ∣ R ∣ x y
+ ⊇-[] : (x y : A) → Block y {ρ} R ⊆  Block x {ρ} R → ∣ R ∣ x y
  ⊇-[] x y yx = yx (IsEquivalence.refl (snd R))
 
- related : ∀ x y → [ x / R ] ≡ [ y / R ] → ∣ R ∣ x y
- related x y xy = IsEquivalence.sym (snd R) (≡→⊆ [ x / R ] [ y / R ] xy (IsEquivalence.refl (snd R)))
+ -- related : (x y : A){R : Equivalence A} → [ x / R ] ≡ [ y / R ] → ∣ R ∣ x y
+ -- related x y {R} xy = IsEquivalence.sym (snd R) (≡→⊆ [ x / R ] [ y / R ] xy (IsEquivalence.refl (snd R)))
 
- []≡-elim : {u v : B} → [ u / R ] ≡ [ v / R ] → ∣ R ∣ u v
- []≡-elim {u}{v} uv = goal
-  where
-  ξ : v ∈ [ v / R ]
-  ξ = (IsEquivalence.refl (snd R))
-  goal : v ∈ [ u / R ]
-  goal = ≡→⊆ [ v / R ] [ u / R ] (uv ⁻¹) ξ -- transp (λ i → (uv ⁻¹) i v ) i0 ξ
+ -- []≡-elim : (u v : A){R : Equivalence A} → [ u / R ] ≡ [ v / R ] → ∣ R ∣ u v
+ -- []≡-elim u v {R} uv = goal
+ --  where
+ --  ξ : v ∈ [ v / R ]
+ --  ξ = (IsEquivalence.refl (snd R))
+ --  goal : v ∈ [ u / R ]
+ --  goal = ≡→⊆ [ v / R ] [ u / R ] (uv ⁻¹) ξ -- transp (λ i → (uv ⁻¹) i v ) i0 ξ
 
 
  -- Can we prove the converse... ?
- -- isProp : {B : Type β}(P : Pred B α) → Type (β ⊔ α)
+ -- isProp : {A : Type β}(P : Pred A α) → Type (β ⊔ α)
  -- isProp P = ∀ x → (p q : x ∈ P) → p ≡ q
- -- []≡-intro : (u v : B) → isProp [ u / R ] → isProp [ v / R ] → ∣ R ∣ u v → [ u / R ] ≡ [ v / R ]
+ -- []≡-intro : (u v : A) → isProp [ u / R ] → isProp [ v / R ] → ∣ R ∣ u v → [ u / R ] ≡ [ v / R ]
  -- []≡-intro u v propu propv uv = {!!}
  -- PropExt ([ u / R ]ₙ) ([ v / R ]ₙ) propu propv ([]-⊆ uv) ([]-⊇ uv)
+
+
+module _ {α β : Level} where
+ ker-IsEquivalence : {A : Type α}{B : Type β}(f : A → B) → IsEquivalence (ker f)
+ ker-IsEquivalence f = record { refl = refl ; sym = λ x → ≡-sym x ; trans = λ x y → ≡-trans x y }
 
 
 
@@ -178,6 +192,14 @@ module _ {B : Type β}{R : Equivalence {α} B} where
 
 \end{code}
 
+
+
+
+
+
+
+
+---------------------------------------------------------------------------- -->
 open import Agda.Builtin.Equality using (_≡_; refl)
 open import Agda.Primitive using (_⊔_; lzero; lsuc; Level; Setω)
 open import Data.Product  using (_,_; Σ; Σ-syntax; _×_)
@@ -204,14 +226,6 @@ open import Relation.Unary using (Pred; _⊆_)
 -- open import relations.discrete renaming (Rel to BinRel) using (ker; PropExt)
 
 
-
-
-
-
-
-
-
----------------------------------------------------------------------------- -->
 
 {- Old quotient development.
 

@@ -48,61 +48,51 @@ open import relations.discrete public
 private variable α ρ : Level
 
 -- Relations of arbitrary arity over a single sort.
-Rel : Arity → Type α → (ρ : Level) → Type (α ⊔ lsuc ρ)
-Rel I A ρ = (I → A) → Type ρ
+Rel : Type α → {I : Arity} → {ρ : Level} → Type (α ⊔ lsuc ρ)
+Rel A {I} {ρ} = (I → A) → Type ρ
 
-ℛ : Type α → {I : Arity}{ρ : Level} → Type (α ⊔ lsuc ρ)
-ℛ A {I} {ρ} = (I → A) → Type ρ
+Rel-syntax : Type α → Arity → (ρ : Level) → Type (α ⊔ lsuc ρ)
+Rel-syntax A I ρ = Rel A {I} {ρ}
 
--- rel : {ρ : Level} → Arity → Type α → Type (lsuc α)
--- rel {ρ} ar A = (ar → A) → Type ρ
+syntax Rel-syntax A I ρ = Rel[ A ^ I ] ρ
+infix 6 Rel-syntax
 
--- Multisorted relations of arbitrary arity
-REL : (I : Arity) → (I → Type α) → (ρ : Level) → Type (α ⊔ lsuc ρ)
-REL I 𝒜 ρ = ((i : I) → 𝒜 i) → Type ρ
+-- The type of arbitrarily multisorted relations of arbitrary arity
+RelΠ : (I : Arity) → (I → Type α) → {ρ : Level} → Type (α ⊔ lsuc ρ)
+RelΠ I 𝒜 {ρ} = ((i : I) → 𝒜 i) → Type ρ
 
-RΠ : {I : Arity} → (I → Type α) → {ρ : Level} → Type (α ⊔ lsuc ρ)
-RΠ {I = I} 𝒜 {ρ} = ((i : I) → 𝒜 i) → Type ρ
+RelΠ-syntax : (I : Arity) → (I → Type α) → {ρ : Level} → Type (α ⊔ lsuc ρ)
+RelΠ-syntax I 𝒜 {ρ} = RelΠ I 𝒜 {ρ}
 
-RΠ-syntax : (I : Arity) → (I → Type α) → {ρ : Level} → Type (α ⊔ lsuc ρ)
-RΠ-syntax I 𝒜 {ρ} = RΠ 𝒜 {ρ}
-
-syntax RΠ-syntax I (λ i → 𝒜) = RΠ[ i ∈ I ] 𝒜
-infix 6 RΠ-syntax
+syntax RelΠ-syntax I (λ i → 𝒜) = RelΠ[ i ∈ I ] 𝒜
+infix 6 RelΠ-syntax
 
 -- Compatibility of relations and operations.
-module _ {I J : Arity} {A : Type α} where
 
- -- Lift a relation of tuples up to a relation on tuples of tuples.
- evalRel : Rel I A ρ → (I → J → A) → Type ρ
- evalRel R t = ∀ (j : J) → R λ i → t i j
-
- evalRel[] : ℛ A → (I → J → A) → Type ρ
- evalRel[] R t = ∀ (j : J) → R λ i → t i j
+-- Lift a relation of tuples up to a relation on tuples of tuples.
+eval-Rel : {I : Arity}{A : Type α} → Rel A → (J : Arity) → (I → J → A) → Type ρ
+eval-Rel R J t = ∀ (j : J) → R λ i → t i j
 
  {- A relation R is compatible with an operation 𝑓 if for every tuple t of tuples
     belonging to R, the tuple whose elements are the result of applying 𝑓 to
     sections of t also belongs to R. (see the bottom of this file for an heuristic explanation) -}
- compRel : Op J A → Rel I A ρ → Type (α ⊔ ρ)
- compRel 𝑓 R  = ∀ (t : (I → J → A)) → (evalRel R t → R λ i → (𝑓 (t i)))
 
- compatible-op-rel : 𝒪(A) → ℛ(A){I}{ρ} → Type (α ⊔ ρ)
- compatible-op-rel 𝑓 R  = ∀ (t : (I → J → A)) → (evalRel R t → R λ i → (𝑓 (t i)))
+compatible-Rel : {I J : Arity}{A : Type α} → Op(A){J} → Rel A {I}{ρ} → Type (α ⊔ ρ)
+compatible-Rel 𝑓 R  = ∀ t → eval-Rel R arity[ 𝑓 ] t → R λ i → 𝑓 (t i)
+-- (inferred type of t is I → J → A)
 
-module _ {I J : Arity} {𝒜 : I → Type α} where
+lift-REL : {I J : Arity}{𝒜 : I → Type α}
+ →         RelΠ I 𝒜 {ρ}       -- the relation type: subsets of Π[ i ∈ I ] 𝒜 i (where Π[ i ∈ I ] 𝒜 i is a type of dependent functions or "tuples")
+ →         ((i : I) → J → 𝒜 i)  -- an I-tuple of (𝒥 i)-tuples
+ →         Type ρ
+lift-REL{I = I}{J}{𝒜} R t = ∀ j → R λ i → (t i) j
 
- -- Lift a relation of tuples up to a relation on tuples of tuples.
- evalREL : REL I 𝒜 ρ → (∀ i → (J → 𝒜 i)) → Type ρ
- evalREL R t = ∀ j → R (λ i → (t i) j)
+compatible-REL : {I J : Arity}{𝒜 : I → Type α}
+ →               (∀ i → Op (𝒜 i){J})  -- for each i : I, an operation of type  𝒪(𝒜 i){J} = (J → 𝒜 i) → 𝒜 i
+ →               RelΠ I 𝒜 {ρ}        -- a subset of Π[ i ∈ I ] 𝒜 i (where Π[ i ∈ I ] 𝒜 i is a type of dependent functions or "tuples")
+ →               Type (α ⊔ ρ)
+compatible-REL {I = I}{J}{𝒜} 𝑓 R  = Π[ t ∈ ((i : I) → J → 𝒜 i) ] lift-REL R t
 
- compREL : (∀ i → 𝒪(𝒜 i)) → REL I 𝒜 ρ → Type (α ⊔ ρ)
- compREL 𝑓 R  = ∀ t → (evalREL R) t → R λ i → (𝑓 i)(t i)
-
- evalREL' : RΠ 𝒜 {ρ} → (∀ i → (J → 𝒜 i)) → Type ρ
- evalREL' R t = ∀ j → R (λ i → (t i) j)
-
- compatible-op-REL : (∀ i → 𝒪 (𝒜 i) ) → RΠ 𝒜 {ρ} → Type (α ⊔ ρ)
- compatible-op-REL 𝑓 R  = ∀ t → (evalREL' R) t → R λ i → (𝑓 i)(t i)
 
 \end{code}
 

@@ -25,6 +25,10 @@ Arity = Type ℓ₀  -- Assuming for now that all arity types have universe leve
                  -- whether it's a real restriction---are there use-cases requiring
                  -- arities inhabiting higher types?
 
+-- ArityP : Type ℓ₁
+-- ArityP = 
+
+-- I ⊎ ｛ x ｝
 
 {-Unary relations. The unary relation (or "predicate") type is imported from
   Relation.Unary of the std lib.
@@ -56,6 +60,10 @@ module _ {α β : Level}
 
  ker : (A → B) → BinRel A β
  ker g x y = g x ≡ g y
+
+ kerlift : (A → B) → (ρ : Level) → BinRel A (β ⊔ ρ)
+ kerlift g ρ x y = Lift ρ (g x ≡ g y)
+
 
  ker' : (A → B) → (I : Arity) → BinRel (I → A) β
  ker' g I x y = g ∘ x ≡ g ∘ y
@@ -102,21 +110,22 @@ Im f ⊆ S = ∀ x → f x ∈ S
 
 
 -- The type of operation symbols.
-Op : Arity → Type α → Type α
-Op I A = (I → A) → A
+-- Op : Arity → Type α → Type α
+-- Op I A = (I → A) → A
 
 -- New notation for operations on A of arity I
 
-𝒪 : Type α → {I : Arity} → Type α
-𝒪 A {I} = (I → A) → A
+Op : Type α → {I : Arity} → Type α
+Op A {I} = (I → A) → A
 
 -- Example (projections)
-π : {I : Arity} {A : Type α } → I → Op I A
+π : {I : Arity} {A : Type α } → I → Op A
 π i x = x i
 
-π' : {I : Arity} {A : Type α } → I → 𝒪 A
-π' i x = x i
 
+
+arity[_] : {I : Arity} {A : Type α } → Op A {I} → Arity
+arity[_] {I = I} f = I
 
 {-Compatibility of binary relations.
   We now define the function `compatible` so that, if `𝑩` denotes a structure and `r` a binary
@@ -127,21 +136,21 @@ Op I A = (I → A) → A
 eval-rel : {A : Type α}{I : Arity} → BinRel A β → BinRel (I → A) β
 eval-rel R u v = ∀ i → R (u i) (v i)
 
-compatible-op : {A : Type α}{I : Arity} → 𝒪 A{I} → BinRel A β → Type (α ⊔ β)
+compatible-op : {A : Type α}{I : Arity} → Op A{I} → BinRel A β → Type (α ⊔ β)
 compatible-op f R  = ∀ u v → (eval-rel R) u v → R (f u) (f v)
 
-comp-op : {A : Type α}{I : Arity} → 𝒪 A{I}  → BinRel A β → Type (α ⊔ β)
+comp-op : {A : Type α}{I : Arity} → Op A{I}  → BinRel A β → Type (α ⊔ β)
 comp-op f R  = ∀ u v → (eval-rel R) u v → R (f u) (f v)
 
 --Fancy notation for compatible-op.
-_|:_ : {A : Type α}{I : Arity} → 𝒪 A{I} → BinRel A β → Type (α ⊔ β)
+_|:_ : {A : Type α}{I : Arity} → Op A{I} → BinRel A β → Type (α ⊔ β)
 f |: R  = (eval-rel R) =[ f ]⇒ R
 
-compatagree : {A : Type α}{I : Arity}{f : 𝒪 A{I}}{R : BinRel A β}
+compatagree : {A : Type α}{I : Arity}{f : Op A{I}}{R : BinRel A β}
  →            compatible-op f R → f |: R
 compatagree {f = f}{R} c {x}{y} Rxy = c x y Rxy
 
-compatagree' : {A : Type α}{I : Arity}{f : 𝒪 A{I}}{R : BinRel A β}
+compatagree' : {A : Type α}{I : Arity}{f : Op A{I}}{R : BinRel A β}
  →             f |: R → compatible-op f R
 compatagree' {f = f}{R} c = λ u v x → c x
 
@@ -151,6 +160,27 @@ compatagree' {f = f}{R} c = λ u v x → c x
 -------------------------------------------------------------------
 --                        THE END                                --
 -------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

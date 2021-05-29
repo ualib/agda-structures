@@ -5,6 +5,8 @@ date : 2021-05-20
 author: William DeMeo
 ---
 
+This is the base submodule of the structures module which presents general (relational-algebraic) structures as inhabitants of record types.  For a similar development using Sigma types see the module called Structures (with an upper-case S).
+
 \begin{code}
 
 {-# OPTIONS --without-K --exact-split --safe #-}
@@ -15,79 +17,77 @@ open import agda-imports
 open import overture.preliminaries
 open import relations.continuous
 
--- Inhabitants of Signature type are pairs, (s , ar), where s is an operation or
--- relation symbol and ar its arity.
-Signature : Type ℓ₁
-Signature = Σ[ F ∈ Type ℓ₀ ] (F → Arity)
-
-Structure : {α : Level}(𝑅 𝐹 : Signature){β : Level} → Type (lsuc α ⊔ lsuc β)
-Structure {α} 𝑅 𝐹 {β} =
- Σ[ B ∈ Type β ]                    -- the domain of the structure is B
-  ( ((r : ∣ 𝑅 ∣) → Rel(∥ 𝑅 ∥ r) B α)  -- the interpretations of the relation symbols
-  × ((f : ∣ 𝐹 ∣) → Op(∥ 𝐹 ∥ f) B) ) -- the interpretations of the operation symbols
-
-RStructure : (β : Level) → Signature → Type (lsuc β)
-RStructure β 𝑅 = Σ[ B ∈ Type β ] ∀(r : ∣ 𝑅 ∣) → rel(∥ 𝑅 ∥ r) B
-
-AStructure : (β : Level) → Signature → Type (lsuc β)
-AStructure β 𝐹 = Σ[ B ∈ Type β ] ∀ (f : ∣ 𝐹 ∣) → Op (∥ 𝐹 ∥ f) B
-
--- Reducts
-Structure→AStructure : {α : Level}{𝑅 𝐹 : Signature}{β : Level} → Structure{α} 𝑅 𝐹 → AStructure β 𝐹
-Structure→AStructure (B , (ℛ , ℱ)) = B , ℱ
-
-Structure→RStructure : {𝑅 𝐹 : Signature}{β : Level} → Structure 𝑅 𝐹 → RStructure β 𝑅
-Structure→RStructure (B , (ℛ , ℱ)) = B , ℛ
-
-
-module _ {𝑅 𝐹 : Signature}  where
-{- Let 𝑅 and 𝐹 be signatures and let ℬ = (B , (ℛ , ℱ)) be an (𝑅, 𝐹)-structure.
-   - If `r : ∣ 𝑅 ∣` is a relation symbol, then `rel ℬ r` is the interpretation of `r` in `ℬ`.
-   - if `f : ∣ 𝐹 ∣` is an opereation symbol, then `op ℬ f` is the interpretation
-   of `f` in `ℬ`. -}
-
-  -- Syntax for interpretation of relations and operations.
-  _⟦_⟧ᵣ : (ℬ : Structure 𝑅 𝐹 {β})(r : fst 𝑅) → Rel ((snd 𝑅) r) (fst ℬ) α
-  ℬ ⟦ R ⟧ᵣ = λ b → (∣ snd ℬ ∣ R) b
-
-  _⟦_⟧ₒ : (ℬ : Structure{α} 𝑅 𝐹 {β})(𝑓 : fst 𝐹) → Op ((snd 𝐹) 𝑓) (fst ℬ)
-  ℬ ⟦ 𝑓 ⟧ₒ = λ b → (snd (snd ℬ) 𝑓) b
-
-  _ʳ_ : (R : fst 𝑅)(ℬ : Structure 𝑅 _ {β}) → Rel ((snd 𝑅) R) (fst ℬ) α
-  R ʳ ℬ = λ b → (ℬ ⟦ R ⟧ᵣ) b
-
-  _ᵒ_ : (𝑓 : fst 𝐹)(ℬ : Structure{α} _ 𝐹 {β}) → Op ((snd 𝐹) 𝑓) (fst ℬ)
-  𝑓 ᵒ ℬ = λ b → (ℬ ⟦ 𝑓 ⟧ₒ) b
-
-  compatible : {ρ : Level} (𝑩 : Structure{α} 𝑅 𝐹 {β}) → BinRel (fst 𝑩) ρ  → Type (β ⊔ ρ)
-  compatible 𝑩 r = ∀ 𝑓 → (𝑓 ᵒ 𝑩) |: r
-
-
--- Alternative development using records
-
 record signature : Type ℓ₁ where
  field
   symbol : Type ℓ₀
-  ar : symbol → Arity
+  arity : symbol → Arity
 
-open signature
+open signature public
 
 
-record structure (𝑅 𝐹 : signature) {β : Level} : Type (lsuc β) where
+record structure {α : Level} (𝑅 : signature) {ρ : Level} (𝐹 : signature) : Type (lsuc (α ⊔ ρ)) where
  field
-  univ : Type β
-  srel  : ∀ (r : symbol 𝑅) → rel(ar 𝑅 r) univ  -- interpretations of relations
-  sop   : ∀ (f : symbol 𝐹) → Op (ar 𝐹 f) univ  -- interpretations of operations
+  carrier : Type α
+  rel : ∀ (𝑟 : symbol 𝑅) → Rel carrier {arity 𝑅 𝑟} {ρ}  -- interpretations of relations
+  op : ∀ (𝑓 : symbol 𝐹) → Op carrier{arity 𝐹 𝑓}       -- interpretations of operations
 
-open structure
+open structure public
 
-compatible' : {𝑅 𝐹 : signature}{β : Level}(𝑩 : structure 𝑅 𝐹 {β}){α : Level} → BinRel (univ 𝑩) α  → Type (α ⊔ β)
-compatible' {𝑅}{𝐹} 𝑩 r = ∀ (𝑓 : symbol 𝐹)(u v : (ar 𝐹) 𝑓 → univ 𝑩) → ((sop 𝑩) 𝑓) |: r
-
-
+compatible : {α ρ β : Level}{𝑅 𝐹 : signature}(𝑨 : structure {α} 𝑅 {ρ} 𝐹) → BinRel (carrier 𝑨) β → Type (α ⊔ β)
+compatible {𝑅 = 𝑅}{𝐹} 𝑨 r = ∀ (𝑓 : symbol 𝐹) → ((op 𝑨) 𝑓) |: r
 
 
+module _ {α ρ : Level}{𝑅 𝐹 : signature} where
+
+ open Lift
+
+ Lift-op : {I : Arity}{A : Type α} → Op A{I} → (ℓ : Level) → Op (Lift ℓ A){I}
+ Lift-op f ℓ = λ x → lift (f (λ i → lower (x i)))
+
+ Lift-rel : {I : Arity}{A : Type α} → Rel A {I}{ρ} → (ℓ : Level) → Rel (Lift ℓ A) {I}{ρ}
+ Lift-rel r ℓ x = r (λ i → lower (x i))
+
+ Lift-structure : structure {α} 𝑅 {ρ} 𝐹 → (ℓ : Level) → structure {α ⊔ ℓ} 𝑅 {ρ} 𝐹
+ Lift-structure 𝑨 ℓ = record { carrier = Lift ℓ (carrier 𝑨) ; rel = lrel ; op = lop }
+  where
+  lrel : (r : symbol 𝑅 ) → Rel (Lift ℓ (carrier 𝑨)){arity 𝑅 r}{ρ}
+  lrel r = λ x → ((rel 𝑨)r) (λ i → lower (x i))
+  lop : (f : symbol 𝐹) → Op (Lift ℓ (carrier 𝑨)) {arity 𝐹 f}
+  lop f = λ x → lift (((op 𝑨) f)( λ i → lower (x i)))
+
+
+
+-- Some examples (of finite signatures)
+-- The signature with...
+-- ... no symbols  (e.g., sets)
+Sig∅ : signature
+Sig∅ = record { symbol = 𝟘 ; arity = λ () }
+
+-- ... one nulary symbol (e.g., pointed sets)
+Sig-0 : signature
+Sig-0 = record { symbol = 𝟙 ; arity = λ 𝟎 → 𝟘 }
+
+Sig-1 : signature -- ...one unary
+Sig-1 = record { symbol = 𝟙 ; arity = λ 𝟎 → 𝟙 }
+
+-- ...one binary symbol (e.g., magmas, semigroups, semilattices)
+Sig-2 : signature
+Sig-2 = record { symbol = 𝟙 ; arity = λ 𝟎 → 𝟚 }
+
+-- ...one nulary and one binary (e.g., monoids)
+Sig-0-1 : signature
+Sig-0-1 = record { symbol = 𝟚 ; arity = λ{ 𝟎 → 𝟘 ; 𝟏 → 𝟚 } }
+
+-- ...one nulary, one unary, and one binary (e.g., groups)
+Sig-0-1-2 : signature
+Sig-0-1-2 = record { symbol = 𝟛 ; arity = λ{ 𝟎 → 𝟘 ; 𝟏 → 𝟙 ; 𝟐 → 𝟚 } }
 \end{code}
+
+
+
+
+
+
 
 
 -------------------------------------------------------------------
@@ -127,4 +127,59 @@ compatible' {𝑅}{𝐹} 𝑩 r = ∀ (𝑓 : symbol 𝐹)(u v : (ar 𝐹) 𝑓 
 
 
 
+
+-- -- Inhabitants of Signature type are pairs, (s , ar), where s is an operation or
+-- -- relation symbol and ar its arity.
+-- Signature : Type ℓ₁
+-- Signature = Σ[ F ∈ Type ℓ₀ ] (F → Arity)
+
+-- Structure : (α : Level) → Signature → (ρ : Level) → Signature → Type (lsuc (α ⊔ ρ))
+-- Structure  α 𝑅 ρ 𝐹 =
+--  Σ[ A ∈ Type α ]                        -- the domain of the structure is A
+--   ( ((r : ∣ 𝑅 ∣) → Rel A {snd 𝑅 r}{ρ})  -- the interpretations of the relation symbols
+--   × ((f : ∣ 𝐹 ∣) → Op A{snd 𝐹 f}) )     -- the interpretations of the operation symbols
+
+-- -- Relations of arbitrary arity over a single sort.
+-- -- Rel : Type α → {I : Arity} → {ρ : Level} → Type (α ⊔ lsuc ρ)
+-- -- Rel A {I} {ρ} = (I → A) → Type ρ
+
+-- RStructure : (α : Level) → Signature → (ρ : Level) → Type (lsuc (α ⊔ ρ))
+-- RStructure α 𝑅 ρ = Σ[ A ∈ Type α ] ∀(r : ∣ 𝑅 ∣) → Rel A {snd 𝑅 r} {ρ}
+-- -- Rel : Arity → Type α → (β : Level) → Type (α ⊔ lsuc β)
+-- -- Rel ar A β = (ar → A) → Type β
+
+-- AStructure : (α : Level) → Signature → Type (lsuc α)
+-- AStructure α 𝐹 = Σ[ A ∈ Type α ] ∀ (f : ∣ 𝐹 ∣) → Op A {snd 𝐹 f}
+
+-- -- Reducts
+-- Structure→AStructure : {α ρ : Level} {𝑅 𝐹 : Signature} → Structure α 𝑅 ρ 𝐹 → AStructure α 𝐹
+-- Structure→AStructure (A , (_ , ℱ)) = A , ℱ
+
+-- Structure→RStructure : {α ρ : Level}{𝑅 𝐹 : Signature} → Structure α 𝑅 ρ 𝐹 → RStructure α 𝑅 ρ
+-- Structure→RStructure (A , (ℛ , _)) = A , ℛ
+-- module _ {α ρ : Level}{𝑅 𝐹 : Signature}  where
+-- {- Let 𝑅 and 𝐹 be signatures and let ℬ = (B , (ℛ , ℱ)) be an (𝑅, 𝐹)-structure.
+--    - If `r : ∣ 𝑅 ∣` is a relation symbol, then `rel ℬ r` is the interpretation of `r` in `ℬ`.
+--    - if `f : ∣ 𝐹 ∣` is an opereation symbol, then `op ℬ f` is the interpretation
+--    of `f` in `ℬ`. -}
+
+--   -- Syntax for interpretation of relations and operations.
+--   _⟦_⟧ᵣ : (𝒜 : Structure α 𝑅 ρ 𝐹)(𝑟 : fst 𝑅) → Rel (fst 𝒜) {snd 𝑅 𝑟} {ρ}
+--   𝒜 ⟦ 𝑟 ⟧ᵣ = λ a → (∣ snd 𝒜 ∣ 𝑟) a
+
+--   _⟦_⟧ₒ : (𝒜 : Structure α 𝑅 ρ 𝐹)(𝑓 : fst 𝐹) → Op (fst 𝒜) {snd 𝐹 𝑓}
+--   𝒜 ⟦ 𝑓 ⟧ₒ = λ a → (snd (snd 𝒜) 𝑓) a
+
+--   _ʳ_ : (𝑟 : fst 𝑅)(𝒜 : Structure α 𝑅 ρ _) → Rel (fst 𝒜){(snd 𝑅) 𝑟}{ρ}
+--   𝑟 ʳ 𝒜 = λ a → (𝒜 ⟦ 𝑟 ⟧ᵣ) a
+
+--   _ᵒ_ : (𝑓 : fst 𝐹)(𝒜 : Structure α _ ρ 𝐹) → Op (fst 𝒜){snd 𝐹 𝑓} 
+--   𝑓 ᵒ 𝒜 = λ a → (𝒜 ⟦ 𝑓 ⟧ₒ) a
+
+-- module _ {α ρ : Level}{𝑅 𝐹 : Signature}  where
+--  Compatible : {ρ' : Level}(𝑨 : Structure α 𝑅 ρ 𝐹) → BinRel (fst 𝑨) ρ'  → Type (α ⊔ ρ')
+--  Compatible 𝑨 r = ∀ 𝑓 → (𝑓 ᵒ 𝑨) |: r
+
+--  Compatible' : {ρ' : Level}(𝑨 : Structure α 𝑅 ρ 𝐹) → BinRel (fst 𝑨) ρ'  → Type (α ⊔ ρ')
+--  Compatible' 𝑨 r = ∀ 𝑓 → compatible-op (𝑓 ᵒ 𝑨) r
 

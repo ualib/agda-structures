@@ -26,7 +26,9 @@ open import overture.inverses
 open import Relation.Binary renaming (Rel to BinRel) using (IsEquivalence)
 open import relations.continuous
 open import relations.quotients
+open import Relation.Binary.PropositionalEquality renaming (trans to ≡-trans) using ()
 
+private variable α β : Level
 
 is-center : (B : Type β ) → B → Type β
 is-center B c = Π[ x ∈ B ] (c ≡ x)
@@ -40,7 +42,7 @@ is-prop A = (x y : A) → x ≡ y
 is-prop-valued : {A : Type α} → BinRel A β → Type(α ⊔ β)
 is-prop-valued  _≈_ = ∀ x y → is-prop (x ≈ y)
 
-singleton-is-prop : {α : Level}(X : Type α) → is-singleton X → is-prop X
+singleton-is-prop : (X : Type α) → is-singleton X → is-prop X
 singleton-is-prop X (c , φ) x y = x ≡⟨ (φ x)⁻¹ ⟩ c ≡⟨ φ y ⟩ y ∎
 
 \end{code}
@@ -161,13 +163,11 @@ Before moving on to define [propositions](Overture.Truncation.html#propositions)
 
 \begin{code}
 
-module _ {α β : Level} {A : Type α} {B : Type β} where
-
- monic-is-embedding|Set : (f : A → B) → is-set B → IsInjective f → is-embedding f
- monic-is-embedding|Set f Bset fmon b (u , fu≡b) (v , fv≡b) = γ
-  where
+monic-is-embedding|Set : {A : Type α} {B : Type β} (f : A → B) → is-set B → IsInjective f → is-embedding f
+monic-is-embedding|Set f Bset fmon b (u , fu≡b) (v , fv≡b) = γ
+ where
   fuv : f u ≡ f v
-  fuv = trans fu≡b (fv≡b ⁻¹)
+  fuv = ≡-trans fu≡b (fv≡b ⁻¹)
 
   uv : u ≡ v
   uv = fmon fuv
@@ -196,14 +196,9 @@ In the next module ([Relations.Extensionality][]) we will define a *quotient ext
 
 \begin{code}
 
- blk-uip : (R : Equivalence{α} B) → Type (lsuc α ⊔ β)
- blk-uip R = ∀ (C : Pred B α) → is-prop (IsBlock C {R})
+blk-uip : {α ρ : Level}(A : Type α)(R : Equivalence A {ρ}) → Type (lsuc (α ⊔ ρ))
+blk-uip {α}{ρ} A R = ∀ (C : Pred A (α ⊔ ρ)) → is-prop (IsBlock{α}{ρ} C {R})
 
- -- record IsBlock {B : Type β}(C : Pred B α){R : Equivalence{α} B} : Type (lsuc α ⊔ β) where
- --  constructor R-block
- --  field
- --   block-u : B
- --   C≡[u] : C ≡ [ block-u / R ]
 \end{code}
 
 It might seem unreasonable to postulate that there is at most one inhabitant of `IsBlock C`, since equivalence classes typically have multiple members, any one of which could serve as a class representative.  However, postulating `blk-uip A R` is tantamount to collapsing each `R`-block to a single point, and this is indeed the correct semantic interpretation of the elements of the quotient `A / R`.
@@ -218,25 +213,25 @@ Naturally, we define the corresponding *truncated continuous relation type* and 
 
 \begin{code}
 
-module _ {β : Level}{I : Arity} where
+module _ {I : Arity} where
 
- IsRelProp : (B : Type β) → Rel I B α  → Type (β ⊔ α)
+ IsRelProp : {ρ : Level}(A : Type α) → Rel A {I}{ρ}  → Type (α ⊔ ρ)
  IsRelProp B P = ∀ (b : (I → B)) → is-prop (P b)
 
- RelProp : Type β → (α : Level) → Type (β ⊔ lsuc α)
- RelProp B α = Σ[ P ∈ Rel I B α ] IsRelProp B P
+ RelProp : Type α → (ρ : Level) → Type (α ⊔ lsuc ρ)
+ RelProp A ρ = Σ[ P ∈ Rel A{I}{ρ} ] IsRelProp A P
 
- RelPropExt : Type β → (α : Level) → Type (β ⊔ lsuc α)
- RelPropExt B α = {P Q : RelProp B α } → ∣ P ∣ ⊆ ∣ Q ∣ → ∣ Q ∣ ⊆ ∣ P ∣ → P ≡ Q
+ RelPropExt : Type α → (ρ : Level) → Type (α ⊔ lsuc ρ)
+ RelPropExt A ρ = {P Q : RelProp A ρ } → ∣ P ∣ ⊆ ∣ Q ∣ → ∣ Q ∣ ⊆ ∣ P ∣ → P ≡ Q
 
- IsRELProp : (ℬ : I → Type β) → REL I ℬ α  → Type (β ⊔ α)
- IsRELProp ℬ P = ∀ (b : ((i : I) → ℬ i)) → is-prop (P b)
+ IsRELProp : {ρ : Level} (𝒜 : I → Type α) → RelΠ I 𝒜 {ρ}  → Type (α ⊔ ρ)
+ IsRELProp 𝒜 P = ∀ (a : ((i : I) → 𝒜 i)) → is-prop (P a)
 
- RELProp : (I → Type β) → (α : Level) → Type (β ⊔ lsuc α)
- RELProp ℬ α = Σ[ P ∈ REL I ℬ α ] IsRELProp ℬ P
+ RELProp : (I → Type α) → (ρ : Level) → Type (α ⊔ lsuc ρ)
+ RELProp 𝒜 ρ = Σ[ P ∈ RelΠ I 𝒜 {ρ} ] IsRELProp 𝒜 P
 
- RELPropExt : (I → Type β) → (α : Level) → Type (β ⊔ lsuc α)
- RELPropExt ℬ α = {P Q : RELProp ℬ α} → ∣ P ∣ ⊆ ∣ Q ∣ → ∣ Q ∣ ⊆ ∣ P ∣ → P ≡ Q
+ RELPropExt : (I → Type α) → (ρ : Level) → Type (α ⊔ lsuc ρ)
+ RELPropExt 𝒜 ρ = {P Q : RELProp 𝒜 ρ} → ∣ P ∣ ⊆ ∣ Q ∣ → ∣ Q ∣ ⊆ ∣ P ∣ → P ≡ Q
 
 \end{code}
 

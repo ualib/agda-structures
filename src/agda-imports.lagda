@@ -24,30 +24,32 @@ open import Axiom.Extensionality.Propositional renaming (Extensionality to funex
 open import Data.Empty using (⊥; ⊥-elim) public
 
 open import Data.Nat using (ℕ; zero; suc; _<_; _>_; _≤_; _≥_; s≤s; z≤n) public
-open import Data.Nat.Properties using (<-irrefl; <-irrelevant; ≤-irrelevant; <⇒≯; <⇒≱; suc-injective; n≤0⇒n≡0; <-transʳ; ≤-reflexive) public -- ; ≤⇒≯; <⇒≯; n≮n; n≤0⇒n≡0; n≤1+n; <⇒≱; ≤-trans; <-trans;  suc-injective; <-irrelevant; ≤-irrelevant; )
+open import Data.Nat.Properties using (<-irrefl; <-irrelevant; ≤-irrelevant; <⇒≯; <⇒≱; suc-injective; n≤0⇒n≡0; <-transʳ; ≤-reflexive) public
 
 open import Data.Product using ( _,_ ; Σ ; Σ-syntax ; _×_; ∃; ∃-syntax)
  renaming ( proj₁ to fst
- ; proj₂ to snd ) public
+          ; proj₂ to snd ) public
 
-open import Data.Sum.Base using (_⊎_)
-
+open import Data.Sum.Base using (_⊎_) -- (we might also want [_,_] )
+ renaming ( inj₁ to inl
+          ; inj₂ to inr ) public
 
 open import Function.Base using (_∘_; id) public
 
 open import Level public using ( Lift; lift; lower) public
 
 open import Relation.Binary.Core using (_⇒_;_=[_]⇒_) public
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; cong; sym; trans; cong-app; module ≡-Reasoning) public
-open ≡-Reasoning
-
+open import Relation.Binary.PropositionalEquality as Eq
+-- open Eq using (_≡_; refl; cong; sym; trans; cong-app; module ≡-Reasoning) public
+open Eq using (_≡_; refl; cong; cong-app; module ≡-Reasoning) public
+open ≡-Reasoning public
 
 -- import Relation.Binary.PropositionalEquality as Eq
 --  using(_≡_; refl; cong; sym; trans; cong-app; module ≡-Reasoning)
 -- open ≡-Reasoning public
 
 open import Relation.Unary using (∅; Pred; _∪_; _∈_; _⊆_; ｛_｝; ⋂) public
+
 open import Relation.Nullary using (¬_; Dec; _because_; ofʸ) public
 
 

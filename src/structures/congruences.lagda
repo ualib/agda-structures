@@ -1,50 +1,57 @@
 ---
 layout: default
-title : structures.congruences module (cubical-structures library)
-date : 2021-05-12
+title : structures.congruences module
+date : 2021-05-28
 author: William DeMeo
 ---
 
 \begin{code}
 
-{-# OPTIONS --without-K --exact-split --safe #-} -- cubical #-}
+{-# OPTIONS --without-K --exact-split --safe #-}
 
 open import structures.base
+open import Relation.Binary.PropositionalEquality renaming (sym to ≡-sym; trans to ≡-trans) using ()
 
-module structures.congruences {𝑅 𝐹 : Signature} where
+module structures.congruences {𝑅 𝐹 : signature} where
 
 open import agda-imports
 open import overture.preliminaries
 open import relations.discrete
+open import relations.extensionality
 open import relations.quotients
 
+private variable α ρ : Level
+
+con : (𝑨 : structure {α} 𝑅 {ρ} 𝐹) → Type (lsuc α ⊔ lsuc ρ)
+con {α}{ρ} 𝑨 = Σ[ θ ∈ Equivalence (carrier 𝑨) {α ⊔ ρ}] (compatible 𝑨 ∣ θ ∣)
+
+-- Example. The zero congruence.
+0[_] : (A : Type α) → {ρ : Level} → BinRel A (α ⊔ ρ)
+0[ A ] {ρ} = λ x y → Lift ρ (x ≡ y)
+
+0[_]IsEquivalence : (A : Type α) →  IsEquivalence (0[ A ] {ρ})
+0[ A ]IsEquivalence = record { refl = lift refl
+                             ; sym = λ p → lift (≡-sym (lower p))
+                             ; trans = λ p q → lift (≡-trans (lower p) (lower q)) }
+
+0[_]Equivalence : (A : Type α){ρ : Level} → Equivalence A {α ⊔ ρ}
+0[ A ]Equivalence {ρ} = 0[ A ] {ρ} , 0[ A ]IsEquivalence
 
 
-Con : {ρ α β : Level}(𝑩 : Structure{α} 𝑅 𝐹 {β}) → Type (lsuc ρ ⊔ β)
-Con {ρ} 𝑩 = Σ[ θ ∈ Equivalence{ρ} ∣ 𝑩 ∣ ] (compatible 𝑩 ∣ θ ∣)
+-- open import Axiom.Extensionality.Propositional renaming (Extensionality to funext)
 
-𝟎-IsEquivalence : {B : Type β} →  IsEquivalence {A = B} 𝟎
-𝟎-IsEquivalence = record { refl = refl ; sym = λ x → sym x ; trans = λ x x₁ → trans x x₁ }
-
-𝟎-Equivalence : {B : Type β} → Equivalence {β} B
-𝟎-Equivalence = 𝟎 , 𝟎-IsEquivalence
-
-
-module _ {𝑩 : Structure{α} 𝑅 𝐹 {β}} where
-
- open import Axiom.Extensionality.Propositional renaming (Extensionality to funext)
-
- 𝟎-compatible-op : funext ℓ₀ β → (𝑓 : ∣ 𝐹 ∣) → (𝑓 ᵒ 𝑩) |: 𝟎
- 𝟎-compatible-op fe 𝑓 {i}{j} ptws0  = γ -- cong (𝑓 ᵒ 𝑩) {!!}
+0[_]compatible-op : (𝑨 : structure {α} 𝑅 {ρ} 𝐹) → swelldef α → (𝑓 : symbol 𝐹) → (op 𝑨) 𝑓 |: (0[ carrier 𝑨 ] {ρ})
+0[ 𝑨 ]compatible-op wd 𝑓 {i}{j} ptws0  = lift γ
   where
-  γ : (𝑓 ᵒ 𝑩) i ≡ (𝑓 ᵒ 𝑩) j
-  γ = cong (𝑓 ᵒ 𝑩) (fe ptws0)
+  γ : ((op 𝑨) 𝑓) i ≡ ((op 𝑨) 𝑓) j
+  γ = wd ((op 𝑨) 𝑓) i j (lower ∘ ptws0)
 
- 𝟎-compatible : funext ℓ₀ β → compatible 𝑩 𝟎
- 𝟎-compatible fe = λ 𝑓 x → 𝟎-compatible-op fe 𝑓 x
+0[_]compatible : (𝑨 : structure {α} 𝑅 {ρ} 𝐹) → swelldef α → compatible{β = α ⊔ ρ} 𝑨 (0[ carrier 𝑨 ]{ρ})
+0[ 𝑨 ]compatible wd = 0[ 𝑨 ]compatible-op wd
 
- 𝟘 : funext ℓ₀ β → Con 𝑩
- 𝟘 fe = 𝟎-Equivalence , 𝟎-compatible fe --   IsCongruence→Con 𝟎 Δ
+
+0con[_] : {ρ : Level}(𝑨 : structure {α} 𝑅 {ρ} 𝐹) → swelldef α → con 𝑨
+0con[_] {α}{ρ} 𝑨 wd = ( 0[ carrier 𝑨 ] {ρ} , 0[ carrier 𝑨 ]IsEquivalence) , 0[ 𝑨 ]compatible wd
 
 
 \end{code}
@@ -56,49 +63,46 @@ A concrete example is `⟪𝟎⟫[ 𝑨 ╱ θ ]`, presented in the next subsect
 
 \begin{code}
 
-module _ {ρ β : Level} where
+_╱_ : (𝑨 : structure {α} 𝑅 {ρ} 𝐹) → con 𝑨 → structure {lsuc (α ⊔ ρ)} 𝑅 {ρ} 𝐹
 
+_╱_ {α}{ρ}𝑨 θ = record { carrier = Quotient (carrier 𝑨){ρ} ∣ θ ∣
+                       ; rel = λ r x → ((rel 𝑨) r) (λ i → ⌞ x i ⌟)
+                       ; op = λ f b → ⟪ ((op 𝑨) f) (λ i → ⌞ b i ⌟) / ∣ θ ∣ ⟫ }
+ \end{code}
 
+The (infered) types of the arguments of the relation (resp., operation) interpretations are `r : ∣ 𝑅 ∣`  and `x : ∥ 𝑅 ∥ r → ∣ 𝑨 ∣ / ∣ θ ∣` (resp., `f : ∣ 𝐹 ∣`  and `b : ∥ 𝐹 ∥ f → ∣ 𝑨 ∣ / ∣ θ ∣`).
 
- _╱_ : (𝑩 : Structure{ρ} 𝑅 𝐹 {β}) → Con{ρ} 𝑩 → Structure{ρ} 𝑅 𝐹 {lsuc ρ ⊔ β}
+Finally, the following elimination rule is sometimes useful.
 
- 𝑩 ╱ θ = (∣ 𝑩 ∣ / ∣ θ ∣)                                    -- domain of the quotient algebra
-         , (λ r x → (r ʳ 𝑩) λ i → ⌞ x i ⌟)
-         , λ f b → ⟪ (f ᵒ 𝑩) (λ i → ⌞ b i ⌟) / ∣ θ ∣ ⟫
+\begin{code}
+
+/≡-elim : {𝑨 : structure {α} 𝑅 {ρ} 𝐹}( (θ , _ ) : con 𝑨){u v : carrier 𝑨}
+ →         ⟪_/_⟫ {α}{ρ} u θ ≡ ⟪ v / θ ⟫ → ∣ θ ∣ u v
+/≡-elim θ {u}{v} x =  ⟪⟫≡-elim u v x
+
 \end{code}
-
-The (infered) types of the arguments of the relation (resp., operation) interpretations are `r : ∣ 𝑅 ∣`  and `x : ∥ 𝑅 ∥ r → ∣ 𝑩 ∣ / ∣ θ ∣` (resp., `f : ∣ 𝐹 ∣`  and `b : ∥ 𝐹 ∥ f → ∣ 𝑩 ∣ / ∣ θ ∣`).
 
 
 **Example**. If we adopt the notation `𝟎[ 𝑨 ╱ θ ]` for the zero (or identity) relation on the quotient algebra `𝑨 ╱ θ`, then we define the zero relation as follows.
 
 \begin{code}
 
- 𝟘[_╱_] : (𝑩 : Structure{α} 𝑅 𝐹 {β})(θ : Con{α} 𝑩) → BinRel (∣ 𝑩 ∣ / ∣ θ ∣) (lsuc α ⊔ β)
- 𝟘[ 𝑩 ╱ θ ] = λ u v → u ≡ v
+𝟘[_╱_] : (𝑨 : structure {α} 𝑅 {ρ} 𝐹)(θ : con 𝑨) → BinRel (_/_ {α}{ρ} (carrier 𝑨) ∣ θ ∣) (lsuc (α ⊔ ρ))
+𝟘[ 𝑨 ╱ θ ] = λ u v → u ≡ v
 
 \end{code}
 
-From this we easily obtain the zero congruence of `𝑨 ╱ θ` by applying the `Δ` function defined above.
-\begin{code}
-
- open import Axiom.Extensionality.Propositional renaming (Extensionality to funext)
-
- 𝟎[_╱_] : (𝑩 : Structure{ρ} 𝑅 𝐹 {β})(θ : Con 𝑩){fe : funext ℓ₀ (lsuc ρ ⊔ β)} → Con{lsuc ρ ⊔ β} (𝑩 ╱ θ)
- 𝟎[ 𝑩 ╱ θ ] {fe} =  𝟘{𝑩 = 𝑩 ╱ θ} fe
-
-\end{code}
-
-
-Finally, the following elimination rule is sometimes useful.
+Putting together the foregoing pieces we obtain the zero congruence of `𝑨 ╱ θ`, for any structure 𝑨 and congruence θ : con 𝑨.
 
 \begin{code}
 
- /≡-elim : {𝑩 : Structure{α} 𝑅 𝐹 {β}}( (θ , _ ) : Con{α} 𝑩){u v : ∣ 𝑩 ∣}
-  →    ⟪ u / θ ⟫ ≡ ⟪ v / θ ⟫ → ∣ θ ∣ u v
- /≡-elim θ {u}{v} x =  ⟪⟫≡-elim u v x
+module _ {α ρ : Level}{wd : swelldef (lsuc (α ⊔ ρ))}  where
+
+ 𝟎[_╱_] : (𝑨 : structure {α} 𝑅 {ρ} 𝐹)(θ : con 𝑨) → con (𝑨 ╱ θ)
+ 𝟎[ 𝑨 ╱ θ ] = ( 0[ carrier (𝑨 ╱ θ) ] , 0[ carrier (𝑨 ╱ θ) ]IsEquivalence) , 0[ 𝑨 ╱ θ ]compatible wd
 
 \end{code}
+
 
 -------------------------------------------------------------------
 --                        THE END                                --
@@ -131,7 +135,7 @@ Finally, the following elimination rule is sometimes useful.
 -- open import Relation.Unary using (Pred; _∈_)
 -- open import Relation.Binary.PropositionalEquality.Core using (sym; trans; cong)
 
--- -- Imports from the Agda Universal Algebra Library
+-- -- Imports from the Agda carrierersal Algebra Library
 -- open import Algebras.Basic
 -- open import Overture.Preliminaries using (Type; 𝓘; 𝓞; 𝓤; 𝓥; 𝓦; Π; -Π; -Σ; ∣_∣; ∥_∥; fst)
 -- open import Relations.Discrete using (𝟎; _|:_)
@@ -151,4 +155,15 @@ rel r b = ?
 -- (λ 𝑟 [ x ] → ((𝑟 ʳ 𝑩) λ i → ∣ fst θ ∣ (x i)))
 op : (f : ∣ 𝐹 ∣)(b : ∥ 𝐹 ∥ f → ∣ 𝑩 ∣ /ₜ ∣ fst θ ∣) → ∣ 𝑩 ∣ /ₜ ∣ fst θ ∣
 op f b = ? -- λ 𝑓 [ 𝑎 ] → [ ((𝑓 ᵒ 𝑩)(λ i →  𝑎 i)) ]  
+
+record IsMinBin {A : Type α} (_≣_ : BinRel A ℓ₀ ) : Typeω where
+ field
+   isequiv : IsEquivalence{α}{ℓ₀} _≣_
+   ismin : {ρ' : Level}(_≋_ : BinRel A ρ'){x y : A} → x ≣ y → x ≋ y
+
+ reflexive : _≡_ ⇒ _≣_
+ reflexive refl = IsEquivalence.refl isequiv
+
+ corefl : _≣_ ⇒ _≡_
+ corefl x≣y = ismin _≡_ x≣y
 
