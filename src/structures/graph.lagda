@@ -14,38 +14,36 @@ The *graph* of 𝑨 is the structure Gr 𝑨 with the same domain as 𝑨 with r
 
 {-# OPTIONS --without-K --exact-split --safe #-}
 
-module structures.graph where
-
 open import agda-imports
 open import overture.preliminaries
 open import relations.continuous
 open import structures.base
 open import homs.base
 
+module structures.graph {𝑅 𝐹 : signature}  where
+
+private variable α ρ₀ : Level
+
 Gr-sig : signature → signature → signature
-Gr-sig 𝑅 𝐹 = record { symbol = symbol 𝑅 ⊎ symbol 𝐹 ; ar = arty }
+Gr-sig 𝑅 𝐹 = record { symbol = symbol 𝑅 ⊎ symbol 𝐹 ; arity = arty }
  where
  arty : symbol 𝑅 ⊎ symbol 𝐹 → Arity
- arty (inl 𝑟) = (ar 𝑅) 𝑟
- arty (inr 𝑓) = (ar 𝐹) 𝑓 ⊎ 𝟙
+ arty (inl 𝑟) = (arity 𝑅) 𝑟
+ arty (inr 𝑓) = (arity 𝐹) 𝑓 ⊎ 𝟙
 
--- record signature : Type ℓ₁ where
---  field
---   symbol : Type ℓ₀
---   ar : symbol → Arity
 
-module _ {𝑅 𝐹 : signature}  where
+Gr : structure {α} 𝑅 𝐹 → structure (Gr-sig 𝑅 𝐹) Sig∅
+Gr 𝑨 = record { carrier = carrier 𝑨 ; rel = split ; op = λ () }
+ where
+  split : (𝑟 : symbol 𝑅 ⊎ symbol 𝐹) → Rel (carrier 𝑨)
+  split (inl 𝑟) arg = rel 𝑨 𝑟 arg -- (rel 𝑨) 𝑟 arg
+  split (inr 𝑓) args = op 𝑨 𝑓 (args ∘ inl) ≡ args (inr 𝟎)
 
- Gr : structure {ℓ₀} 𝑅 {ℓ₀} 𝐹 → structure {ℓ₀} (Gr-sig 𝑅 𝐹) {ℓ₀} Sig∅
- Gr 𝑨 = record { univ = univ 𝑨 ; rel = split ; op = λ () }
-  where
-  split : (𝑟 : symbol 𝑅 ⊎ symbol 𝐹) → Rel (univ 𝑨)
-  split (inl 𝑟) arg = (rel 𝑨) 𝑟 arg
-  split (inr 𝑓) args = (op 𝑨) 𝑓 (args ∘ inl) ≡ args (inr 𝟎)
 
- hom→Grhom : {𝑨 𝑩 : structure {ℓ₀} 𝑅 {ℓ₀} 𝐹} → hom 𝑨 𝑩 → hom (Gr 𝑨) (Gr 𝑩)
- hom→Grhom {𝑨}{𝑩} (h , hhom) = h , (i , ii)
-  where
+
+hom→Grhom : {𝑨 𝑩 : structure {ℓ₀} 𝑅 {ℓ₀} 𝐹} → hom 𝑨 𝑩 → hom (Gr 𝑨) (Gr 𝑩)
+hom→Grhom {𝑨}{𝑩} (h , hhom) = h , (i , ii)
+ where
   i : is-hom-rel (Gr 𝑨) (Gr 𝑩) h
   i (inl 𝑟) a x = ∣ hhom ∣ 𝑟 a x
   i (inr 𝑓) a x = γ
@@ -54,26 +52,26 @@ module _ {𝑅 𝐹 : signature}  where
    homop = (snd hhom) 𝑓 (a ∘ inl)
 
    γ : op 𝑩 𝑓 (h ∘ (a ∘ inl)) ≡ h (a (inr 𝟎))
-   γ = op 𝑩 𝑓 (h ∘ (a ∘ inl)) ≡⟨ sym homop ⟩
+   γ = op 𝑩 𝑓 (h ∘ (a ∘ inl)) ≡⟨ ≡-sym homop ⟩
        h (op 𝑨 𝑓 (a ∘ inl))   ≡⟨ cong h x ⟩
        h (a (inr 𝟎))           ∎
   ii : is-hom-op (Gr 𝑨) (Gr 𝑩) h
   ii = λ ()
 
 
- Grhom→hom : {𝑨 𝑩 : structure {ℓ₀} 𝑅 {ℓ₀} 𝐹} → hom (Gr 𝑨) (Gr 𝑩) → hom 𝑨 𝑩
- Grhom→hom {𝑨}{𝑩} (h , hhom) = h , (i , ii)
-  where
+Grhom→hom : {𝑨 𝑩 : structure {ℓ₀} 𝑅 {ℓ₀} 𝐹} → hom (Gr 𝑨) (Gr 𝑩) → hom 𝑨 𝑩
+Grhom→hom {𝑨}{𝑩} (h , hhom) = h , (i , ii)
+ where
   i : is-hom-rel 𝑨 𝑩 h
   i R a x = fst hhom (inl R) a x
   ii : is-hom-op 𝑨 𝑩 h
   ii f a = γ
    where
-   split : ar 𝐹 f ⊎ 𝟙 → univ 𝑨
+   split : arity 𝐹 f ⊎ 𝟙 → carrier 𝑨
    split (inl x) = a x
    split (inr y) = op 𝑨 f a
    γ : h (op 𝑨 f a) ≡ op 𝑩 f (λ x → h (a x))
-   γ = sym (fst hhom (inr f) split refl )
+   γ = ≡-sym (fst hhom (inr f) split refl )
 
 
 
@@ -95,3 +93,4 @@ module _ {𝑅 𝐹 : signature}  where
 
  -- hom : Type (α ⊔ β)
  -- hom = Σ[ h ∈ ((univ 𝑨) → (univ 𝑩)) ] is-hom h
+ 

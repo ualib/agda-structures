@@ -25,10 +25,6 @@ Arity = Type ℓ₀  -- Assuming for now that all arity types have universe leve
                  -- whether it's a real restriction---are there use-cases requiring
                  -- arities inhabiting higher types?
 
--- ArityP : Type ℓ₁
--- ArityP = 
-
--- I ⊎ ｛ x ｝
 
 {-Unary relations. The unary relation (or "predicate") type is imported from
   Relation.Unary of the std lib.
@@ -85,33 +81,12 @@ module _ {α ρ : Level}{A : Type (α ⊔ ρ)} where
  ⊑-trans {P = P}{Q}{R} PQ QR x y Pxy = QR x y (PQ x y Pxy)
 
 
-
-
- -- 𝟎 : BinRel A (α ⊔ β)
- -- 𝟎 x y = Lift α (x ≡ y)
- -- 𝟎 : BinRel A ρ
- -- 𝟎 x y = {!!} -- x ≡ y
-
- -- 𝟎-pred : Pred (A × A) α
- -- 𝟎-pred (x , y) = {!!} -- x ≡ y
-
- -- 𝟎-sigma : Type α
- -- 𝟎-sigma = {!!} -- Σ[ x ∈ A ] Σ[ y ∈ A ] x ≡ y
-
-
-
 private variable α β ρ : Level
 
 -- The following type denotes the assertion that the image of a given
 -- function is contained in a given subset of the codomain.
 Im_⊆_ : {A : Type α}{B : Type β} → (A → B) → Pred B ρ → Type (α ⊔ ρ)
 Im f ⊆ S = ∀ x → f x ∈ S
-
-
-
--- The type of operation symbols.
--- Op : Arity → Type α → Type α
--- Op I A = (I → A) → A
 
 -- New notation for operations on A of arity I
 
@@ -121,7 +96,6 @@ Op A {I} = (I → A) → A
 -- Example (projections)
 π : {I : Arity} {A : Type α } → I → Op A
 π i x = x i
-
 
 
 arity[_] : {I : Arity} {A : Type α } → Op A {I} → Arity
