@@ -40,8 +40,10 @@ open import Level public using ( Lift; lift; lower) public
 
 open import Relation.Binary.Core using (_⇒_;_=[_]⇒_) public
 open import Relation.Binary.PropositionalEquality as Eq
--- open Eq using (_≡_; refl; cong; sym; trans; cong-app; module ≡-Reasoning) public
-open Eq using (_≡_; refl; cong; cong-app; module ≡-Reasoning) public
+open Eq
+ renaming (sym to ≡-sym; trans to ≡-trans)
+ using (_≡_; refl; cong; cong-app; module ≡-Reasoning) public
+
 open ≡-Reasoning public
 
 -- import Relation.Binary.PropositionalEquality as Eq

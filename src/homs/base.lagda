@@ -212,8 +212,8 @@ If in addition we have a family `𝒽 : (i : I) → hom 𝑨 (ℬ i)` of homomor
 \begin{code}
 module _ {I : Arity}(ℬ : I → structure {β} 𝑅 {ρ₁} 𝐹) where
 
- -- ⨅-hom-co : funext ? ? → {α : Level}(𝑨 : structure {α} 𝑅 {ρ₀} 𝐹) → (∀(i : I) → hom 𝑨 (ℬ i)) → hom 𝑨 (⨅ ℬ)
- -- ⨅-hom-co fe 𝑨 𝒽 = ? -- ((λ a i → ∣ 𝒽 i ∣ a)) , (λ 𝑓 𝒶 → fe λ i → ∥ 𝒽 i ∥ 𝑓 𝒶)
+ ⨅-hom-co : funext ? ? → {α : Level}(𝑨 : structure {α} 𝑅 {ρ₀} 𝐹) → (∀(i : I) → hom 𝑨 (ℬ i)) → hom 𝑨 (⨅ ℬ)
+ ⨅-hom-co fe 𝑨 𝒽 = ? -- ((λ a i → ∣ 𝒽 i ∣ a)) , (λ 𝑓 𝒶 → fe λ i → ∥ 𝒽 i ∥ 𝑓 𝒶)
 
  -- OLD VERSION
  -- ⨅-hom-co : funext 𝓘 𝓦 → {𝓤 : Level}(𝑨 : Algebra 𝓤 𝑆) → (∀(i : I) → hom 𝑨 (ℬ i)) → hom 𝑨 (⨅ ℬ)

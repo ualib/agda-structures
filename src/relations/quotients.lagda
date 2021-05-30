@@ -19,7 +19,6 @@ open import agda-imports
 open import overture.preliminaries
 open import Relation.Binary renaming (Rel to BinRel) using (IsEquivalence) public
 open import relations.continuous public
-open import Relation.Binary.PropositionalEquality renaming (sym to ≡-sym; trans to ≡-trans) using ()
 
 private variable α : Level
 
@@ -88,24 +87,6 @@ module _ {A : Type α}(ρ : Level) {R : Equivalence A {ρ}} where
  ⊇-[] : (x y : A) → Block y {ρ} R ⊆  Block x {ρ} R → ∣ R ∣ x y
  ⊇-[] x y yx = yx (IsEquivalence.refl (snd R))
 
- -- related : (x y : A){R : Equivalence A} → [ x / R ] ≡ [ y / R ] → ∣ R ∣ x y
- -- related x y {R} xy = IsEquivalence.sym (snd R) (≡→⊆ [ x / R ] [ y / R ] xy (IsEquivalence.refl (snd R)))
-
- -- []≡-elim : (u v : A){R : Equivalence A} → [ u / R ] ≡ [ v / R ] → ∣ R ∣ u v
- -- []≡-elim u v {R} uv = goal
- --  where
- --  ξ : v ∈ [ v / R ]
- --  ξ = (IsEquivalence.refl (snd R))
- --  goal : v ∈ [ u / R ]
- --  goal = ≡→⊆ [ v / R ] [ u / R ] (uv ⁻¹) ξ -- transp (λ i → (uv ⁻¹) i v ) i0 ξ
-
-
- -- Can we prove the converse... ?
- -- isProp : {A : Type β}(P : Pred A α) → Type (β ⊔ α)
- -- isProp P = ∀ x → (p q : x ∈ P) → p ≡ q
- -- []≡-intro : (u v : A) → isProp [ u / R ] → isProp [ v / R ] → ∣ R ∣ u v → [ u / R ] ≡ [ v / R ]
- -- []≡-intro u v propu propv uv = {!!}
- -- PropExt ([ u / R ]ₙ) ([ v / R ]ₙ) propu propv ([]-⊆ uv) ([]-⊇ uv)
 
 
 module _ {α β : Level} where
@@ -113,10 +94,20 @@ module _ {α β : Level} where
  ker-IsEquivalence f = record { refl = refl ; sym = λ x → ≡-sym x ; trans = λ x y → ≡-trans x y }
 
 
+-- The zero of relation.
+0[_] : (A : Type α) → {ρ : Level} → BinRel A (α ⊔ ρ)
+0[ A ] {ρ} = λ x y → Lift ρ (x ≡ y)
+
+0[_]IsEquivalence : (A : Type α) → {ρ : Level} → IsEquivalence (0[ A ] {ρ})
+0[ A ]IsEquivalence {ρ} = record { refl = lift refl
+                              ; sym = λ p → lift (≡-sym (lower p))
+                              ; trans = λ p q → lift (≡-trans (lower p) (lower q)) }
+
+0[_]Equivalence : (A : Type α){ρ : Level} → Equivalence A {α ⊔ ρ}
+0[ A ]Equivalence {ρ} = 0[ A ] {ρ} , 0[ A ]IsEquivalence
+
 
 \end{code}
-
-An example application of these is the `block-ext` type in the [Relations.Extensionality] module.
 
 
 
@@ -319,4 +310,24 @@ A predicate `C` over `A` is an `R`-block if and only if `C ≡ [ u ]` for some `
 If `R` is an equivalence relation on `A`, then the *quotient* of `A` modulo `R` is denoted by `A / R` and is defined to be the collection `{[ u ] ∣  y : A}` of all `R`-blocks.<sup>[1](Relations.Quotients.html#fn1)</sup>
 
 We use the following type to represent an \ab R-block with a designated representative.
+
+ -- related : (x y : A){R : Equivalence A} → [ x / R ] ≡ [ y / R ] → ∣ R ∣ x y
+ -- related x y {R} xy = IsEquivalence.sym (snd R) (≡→⊆ [ x / R ] [ y / R ] xy (IsEquivalence.refl (snd R)))
+
+ -- []≡-elim : (u v : A){R : Equivalence A} → [ u / R ] ≡ [ v / R ] → ∣ R ∣ u v
+ -- []≡-elim u v {R} uv = goal
+ --  where
+ --  ξ : v ∈ [ v / R ]
+ --  ξ = (IsEquivalence.refl (snd R))
+ --  goal : v ∈ [ u / R ]
+ --  goal = ≡→⊆ [ v / R ] [ u / R ] (uv ⁻¹) ξ -- transp (λ i → (uv ⁻¹) i v ) i0 ξ
+
+
+ -- Can we prove the converse... ?
+ -- isProp : {A : Type β}(P : Pred A α) → Type (β ⊔ α)
+ -- isProp P = ∀ x → (p q : x ∈ P) → p ≡ q
+ -- []≡-intro : (u v : A) → isProp [ u / R ] → isProp [ v / R ] → ∣ R ∣ u v → [ u / R ] ≡ [ v / R ]
+ -- []≡-intro u v propu propv uv = {!!}
+ -- PropExt ([ u / R ]ₙ) ([ v / R ]ₙ) propu propv ([]-⊆ uv) ([]-⊇ uv)
+An example application of these is the `block-ext` type in the [Relations.Extensionality] module.
 
