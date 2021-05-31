@@ -49,7 +49,7 @@ Op[_] : (A : Type α) (n : ℕ) → Type α
 Op[ A ] n = (Fin n → A) → A
 
 -- All operations on A
-O[_] : (A : Type α) → Type {!!}
+O[_] : (A : Type α) → Type α
 O[ A ] = Σ[ n ∈ ℕ ] Op[ A ] n
 
 
