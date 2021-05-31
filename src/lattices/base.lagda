@@ -42,16 +42,16 @@ data semilattice-op : Type ℓ₀ where
 
 -- The relational signature (semilattices have no relations)
 semilattice-rels : signature
-semilattice-rels = record { symbol = 𝟘 ; ar = λ () }
+semilattice-rels = record { symbol = 𝟘 ; arity = λ () }
 
 
 -- The operational signature (semilattices have one binary operation)
 semilattice-ops : signature
-semilattice-ops = record { symbol = semilattice-op ; ar = λ ∧ → 𝟚 }
+semilattice-ops = record { symbol = semilattice-op ; arity = λ ∧ → 𝟚 }
 
 -- The two element semilattice
 𝟚-semilattice : structure {ℓ₀} semilattice-rels  {ℓ₀} semilattice-ops
-𝟚-semilattice = record { univ = 𝟚 ; srel = λ() ; sop = λ ∧ x → min (x 𝟎) (x 𝟏) }
+𝟚-semilattice = record { carrier = 𝟚 ; rel = λ() ; op = λ ∧ x → min (x 𝟎) (x 𝟏) }
  where
  min : 𝟚 → 𝟚 → 𝟚
  min 𝟎 b = 𝟎
