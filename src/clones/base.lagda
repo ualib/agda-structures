@@ -75,11 +75,11 @@ ProjComp : {n k : ℕ} {f : Op[ A ] n}(G : (i : Fin n) → Op[ A ] k)
 ProjComp G (j , p) q = (fst (q j)) , λ x → ≡-trans (p (λ z → G z x)) (snd (q j) x)
 
 
-data Clone {A : Type α}(𝒦 : Pred( O[ A ] ) α) : Pred( O[ A ] ) α
- where
- cbase : (n : ℕ)(i : Fin n) → (n , π[ n ] i) ∈ Clone 𝒦
- comp : (n k : ℕ) (f : Op[ A ] n)(G : (i : Fin n) → Op[ A ] k)
-  →     (n , f) ∈ Clone 𝒦 → (∀ i → (k , G i) ∈ Clone 𝒦) → (k , f ∘[ k ] G) ∈ Clone 𝒦
+data Clone {A : Type α}(𝒦 : Pred( O[ A ] ) α) : Pred( O[ A ] ) α where
+ cbase : 𝒦 ⊆ Clone 𝒦
+ cproj : {n : ℕ}(i : Fin n) → (n , π[ n ] i) ∈ Clone 𝒦
+ ccomp : {n k : ℕ} (f : Op[ A ] n)(G : (i : Fin n) → Op[ A ] k)
+  →      (n , f) ∈ Clone 𝒦 → (∀ i → (k , G i) ∈ Clone 𝒦) → (k , f ∘[ k ] G) ∈ Clone 𝒦
 
 
 IsClone : {A : Type α}(𝒦 : Pred( O[ A ] ) α) → Type α
@@ -87,8 +87,9 @@ IsClone 𝒦 = Clone 𝒦 ⊆ 𝒦
 
 -- The collection of projections is a clone.
 ProjIsClone : {A : Type α} → IsClone{α}{A} Proj
-ProjIsClone (cbase n i) = i , (λ x → refl)
-ProjIsClone (comp n k f G x x₁) = ProjComp G (ProjIsClone x) (ProjIsClone ∘ x₁)
+ProjIsClone (cbase x) = x
+ProjIsClone (cproj i) = i , (λ x → refl)
+ProjIsClone (ccomp f G Pf PG) = ProjComp G (ProjIsClone Pf) (ProjIsClone ∘ PG)
 
 
 -- Term Equivalence of General Structures
@@ -105,3 +106,12 @@ ProjIsClone (comp n k f G x x₁) = ProjComp G (ProjIsClone x) (ProjIsClone ∘ 
 
 -- TE : {U : Type α} {X : Type χ} → BinRel (Pred (Op U {X}) α) α
 -- TE CA CB = CA ⊆ CB × CB ⊆ CA
+
+
+
+
+-- data projclone {A : Type α} : Pred( O[ A ] ) α where
+--  cbas : {n : ℕ}(i : Fin n) → (n , π[ n ] i) ∈ projclone
+--  com : {n k : ℕ} (f : Op[ A ] n)(G : (i : Fin n) → Op[ A ] k)
+--   →     (n , f) ∈ projclone → (∀ i → (k , G i) ∈ projclone) → (k , f ∘[ k ] G) ∈ projclone
+
