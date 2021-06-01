@@ -113,9 +113,6 @@ eval-rel R u v = ∀ i → R (u i) (v i)
 compatible-op : {A : Type α}{I : Arity} → Op A{I} → BinRel A β → Type (α ⊔ β)
 compatible-op f R  = ∀ u v → (eval-rel R) u v → R (f u) (f v)
 
-comp-op : {A : Type α}{I : Arity} → Op A{I}  → BinRel A β → Type (α ⊔ β)
-comp-op f R  = ∀ u v → (eval-rel R) u v → R (f u) (f v)
-
 --Fancy notation for compatible-op.
 _|:_ : {A : Type α}{I : Arity} → Op A{I} → BinRel A β → Type (α ⊔ β)
 f |: R  = (eval-rel R) =[ f ]⇒ R
